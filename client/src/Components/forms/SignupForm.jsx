@@ -1,6 +1,7 @@
 // This component was partially generated using an AI tool (ChatGPT).
 // Tailwind CSS classes were adapted from official documentation: https://tailwindcss.com/docs
 
+import { toast } from "react-toastify";
 import { useState } from "react";
 
 //Functional component for Signup Form
@@ -18,11 +19,52 @@ const SignupForm = () => {
   };
 
   //Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Signup Submitted:", formData);
-    alert("Signup Successful! 🍌");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("🎉 Signup Successful! Welcome to Banana Land 🍌", {
+          style: {
+            background: "#FFF7E6",
+            color: "#3D6B3D",
+            border: "2px solid #FFD166",
+            borderRadius: "12px",
+          },
+          
+        });
+
+        setFormData({ username: "", email: "", password: "" }); // reset form
+      } else {
+        toast.error(`❌ ${data.message || "Signup failed!"}`, {
+          style: {
+            background: "#FFEAEA",
+            color: "#8B1A1A",
+            border: "2px solid #FF7B7B",
+            borderRadius: "12px",
+          },
+        });
+      }
+    } catch (err) {
+      toast.error("💥 Connection error. Try again later!", {
+        style: {
+          background: "#FFF1E1",
+          color: "#B85C00",
+          border: "2px solid #FEC260",
+          borderRadius: "12px",
+        },
+      });
+    }
   };
+
 
   //Signup form interface
   return (

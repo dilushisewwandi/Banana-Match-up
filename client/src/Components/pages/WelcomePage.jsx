@@ -37,7 +37,7 @@ const WelcomePage = () => {
 
         {/* Start Game Button */}
         <h2
-          onClick={() => navigate("/levels")}
+          onClick={() => navigate("/dashboard")}
           className="mt-8 text-5xl md:text-6xl font-extrabold text-yellow-600 hover:text-yellow-700 cursor-pointer transition duration-300 ease-in-out transform hover:scale-110 hover:rotate-2 drop-shadow-lg"
         >
           ✨ Tap to Play ✨
