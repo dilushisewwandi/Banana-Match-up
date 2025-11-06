@@ -8,7 +8,6 @@ import BeginnerLevel from './Components/pages/BeginnerLevel';
 import IntermediateLevel from './Components/pages/IntermediateLevel';
 import AdvancedLevel from './Components/pages/AdvancedLevel';
 import Dashboard from './Components/pages/Dashboard';
-import { ToastContainer} from 'react-toastify'
 
 export default function App() {
   return (
@@ -25,18 +24,6 @@ export default function App() {
           <Route path='/advanced' element={<AdvancedLevel/>}/>
           <Route path='/dashboard' element={<Dashboard/>}/>
         </Routes>
-
-        <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        pauseOnHover
-        theme="light"
-      />
     </Router>
-
-    
   );
 };
