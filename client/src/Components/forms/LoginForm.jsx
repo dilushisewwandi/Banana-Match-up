@@ -5,7 +5,6 @@ import { toast } from "react-toastify";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-//Functional component for Login form
 const LoginForm = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -13,13 +12,11 @@ const LoginForm = () => {
     password: "",
   });
 
-  //Update form data 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -33,6 +30,7 @@ const LoginForm = () => {
       const data = await res.json();
 
       if (res.ok) {
+        //Show toast FIRST (on AuthPage)
         toast.success("🍌 Login Successful! Let’s play!", {
           style: {
             background: "#E9FFE7",
@@ -41,9 +39,16 @@ const LoginForm = () => {
             borderRadius: "12px",
           },
         });
+
+        //Save token and clear form
         localStorage.setItem("token", data.token);
         setFormData({ email: "", password: "" });
-        navigate("/welcome");
+
+        //Wait for toast → THEN navigate
+        setTimeout(() => {
+          navigate("/welcome");
+        }, 1500);
+
       } else {
         toast.error(`😢 ${data.message || "Invalid credentials!"}`, {
           style: {
@@ -54,6 +59,7 @@ const LoginForm = () => {
           },
         });
       }
+
     } catch (err) {
       toast.error("⚠️ Oops! Server not responding.", {
         style: {
@@ -66,8 +72,6 @@ const LoginForm = () => {
     }
   };
 
-
-  //Form Interface
   return (
     <form
       onSubmit={handleSubmit}
@@ -114,5 +118,3 @@ const LoginForm = () => {
 };
 
 export default LoginForm;
-
-
