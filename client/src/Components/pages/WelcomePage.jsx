@@ -1,9 +1,33 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const WelcomePage = () => {
   const navigate = useNavigate();
-  const [player] = useState({ name: "Player" });
+  const [player, setPlayer] = useState({ name: "Player" });
+
+  useEffect(() =>{
+    //Get the JWT token stored in localStorage after login
+    const token = localStorage.getItem("token");
+
+    //If there is no token, redirect the user to the login page
+    if(!token) {
+      navigate("/login"); 
+      return;
+    }
+
+     // Fetch logged-in user's info from backend
+    fetch("http://localhost:5000/api/user", 
+      {headers: {"Authorization": `Bearer ${token}`, // send JWT token in header for authentication
+    },})
+    .then(res => res.json()) // parse response as JSON
+    .then(data => {
+      if (data.user){
+        // Update the state with the fetched username
+        setPlayer({name: data.user.username});
+      }
+    })
+    .catch(err => console.error(err)); 
+  }, [navigate]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-lime-100 via-green-100 to-yellow-100 overflow-hidden font-playful">
