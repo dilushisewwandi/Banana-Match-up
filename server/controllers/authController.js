@@ -64,4 +64,12 @@ export const login = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Server error while logging in" });
   }
+
+  //Create player (ensures every new user gets a player profile)
+  await Player.create({
+    userId: newUser.userId,
+    totalScore: 0,
+    bananaCount: 0, 
+    level: "beginner",
+  });
 };
