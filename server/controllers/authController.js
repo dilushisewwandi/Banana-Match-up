@@ -26,10 +26,18 @@ export const signup = async (req, res) => {
       password: hashedPassword,
     });
 
-    res.status(201).json({ message: "User registered successfully!", userId: newUser.userId });
+    //Create player (ensures every new user gets a player profile)
+    await Player.create({
+    userId: newUser.userId,
+    totalScore: 0,
+    bananaCount: 0, 
+    level: "beginner",
+  });
+
+    return res.status(201).json({ message: "User registered successfully!", userId: newUser.userId });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error while registering user." });
+    return res.status(500).json({ message: "Server error while registering user." });
   }
 };
 
@@ -40,12 +48,11 @@ export const login = async (req, res) => {
   try {
     // Find user by email
     const user = await User.findOne({ where: { email } });
-
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Compare password
+    // Validate password
     const validPassword = bcrypt.compareSync(password, user.password);
 
     if (!validPassword) {
@@ -58,18 +65,9 @@ export const login = async (req, res) => {
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-
-    res.json({ message: "Login successful", token });
+    return res.json({ message: "Login successful", token });
   } catch (err) {
     console.error(err);
-    res.status(500).json({ message: "Server error while logging in" });
+    return res.status(500).json({ message: "Server error while logging in" });
   }
-
-  //Create player (ensures every new user gets a player profile)
-  await Player.create({
-    userId: newUser.userId,
-    totalScore: 0,
-    bananaCount: 0, 
-    level: "beginner",
-  });
 };
