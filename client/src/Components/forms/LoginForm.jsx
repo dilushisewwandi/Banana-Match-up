@@ -1,30 +1,77 @@
 // This component was partially generated using an AI tool (ChatGPT).
 // Tailwind CSS classes were adapted from official documentation: https://tailwindcss.com/docs
 
+import { toast } from "react-toastify";
 import { useState } from "react";
-import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-//Functional component for Login form
 const LoginForm = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
 
-  //Update form data 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  //Handle form submission
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login Submitted:", formData);
-    alert("Login Successful! 🍌");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        //Show toast FIRST (on AuthPage)
+        toast.success("🍌 Login Successful! Let’s play!", {
+          style: {
+            background: "#E9FFE7",
+            color: "#256029",
+            border: "2px solid #B5E48C",
+            borderRadius: "12px",
+          },
+        });
+
+        //Save token and clear form
+        localStorage.setItem("token", data.token);
+        setFormData({ email: "", password: "" });
+
+        //Wait for toast → THEN navigate
+        setTimeout(() => {
+          navigate("/welcome");
+        }, 1500);
+
+      } else {
+        toast.error(`😢 ${data.message || "Invalid credentials!"}`, {
+          style: {
+            background: "#FFEAEA",
+            color: "#A50E0E",
+            border: "2px solid #FF9999",
+            borderRadius: "12px",
+          },
+        });
+      }
+
+    } catch (err) {
+      toast.error("⚠️ Oops! Server not responding.", {
+        style: {
+          background: "#FFF1E1",
+          color: "#B85C00",
+          border: "2px solid #FEC260",
+          borderRadius: "12px",
+        },
+      });
+    }
   };
 
-  //Form Interface
   return (
     <form
       onSubmit={handleSubmit}
