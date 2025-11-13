@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; 
 
 const BeginnerLevel = () => {
   const navigate = useNavigate();
@@ -11,6 +12,22 @@ const BeginnerLevel = () => {
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
+
+  //Function to save score to backend
+  const saveScore = async () => {
+  try {
+    //get logged-in playerId assuming localStorage after the user login
+    const playerId = localStorage.getItem("playerId"); 
+
+    await axios.post("http://localhost:5000/api/level/beginner", {
+      playerId,
+      scoreValue: score,
+    });
+    console.log("Beginner score saved!");
+  } catch (error) {
+    console.error("Error saving beginner score:", error);
+  }
+};
 
   //Game rounds
   const rounds = [
@@ -62,7 +79,12 @@ const BeginnerLevel = () => {
           Your Score: {score} 🍌
         </motion.p>
         <button
-          onClick={() => navigate("/intermediate")}
+          onClick={async () => {
+            await saveScore();
+            navigate("/intermediate");
+          }
+          }
+           
           className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
         >
           Next Level ➜
@@ -144,10 +166,10 @@ const BeginnerLevel = () => {
 
       {/* Levels button */}
       <button
-        onClick={() => navigate("/levels")}
+        onClick={() => navigate("/dashboard")}
         className="mb-8 bg-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition"
       >
-        ⬅ Back to Levels
+        ⬅ Back to Dashboard
       </button>
     </div>
   );
