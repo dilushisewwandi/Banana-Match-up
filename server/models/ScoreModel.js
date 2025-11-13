@@ -14,6 +14,10 @@ export const Score = sequelize.define(
             type: DataTypes.INTEGER,
             defaultValue: 0,
         },
+        level: {
+            type: DataTypes.STRING,
+            allowNull: false,
+        }
     },
     {
         tableName: "scores",
