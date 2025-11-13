@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -8,16 +9,31 @@ const Dashboard = () => {
     beginner: 0,
     intermediate: 0,
     advanced: 0,
+    totalScore: 0,
   });
 
   useEffect(() => {
-    const beginner = parseInt(localStorage.getItem("beginnerScore")) || 0;
-    const intermediate = parseInt(localStorage.getItem("intermediateScore")) || 0;
-    const advanced = parseInt(localStorage.getItem("advancedScore")) || 0;
-    setScores({ beginner, intermediate, advanced });
-  }, []);
+    const fetchDashboardData = async () => {
+      try{
+        //get logged-in playerId assuming localStorage after the user login
+        const playerId = localStorage.getItem("playerId");
 
-  const totalScore = scores.beginner + scores.intermediate + scores.advanced;
+        if(!playerId){
+          console.error("No player found in localStorage.");
+          return;
+        }
+
+        //fetch player data from backend
+        const res = await axios.get(`http://localhost:5000/api/dashboard?playerId=${playerId}`);
+        setScores(res.data);
+
+      }catch(error){
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start text-yellow-900 font-playful bg-gradient-to-b from-yellow-50 via-yellow-100 to-yellow-200 overflow-hidden">
@@ -86,7 +102,7 @@ const Dashboard = () => {
         </div>
 
         <div className="text-center mt-6 text-2xl font-bold text-yellow-900">
-          🏆 Total Score: <span className="text-3xl">{totalScore} 🍌</span>
+          🏆 Total Score: <span className="text-3xl">{scores.totalScore} 🍌</span>
         </div>
       </motion.div>
 
