@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 import cors from "cors";
 import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
-import dashboardRoutes from "./routes/dashboardRoutes.js"
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import levelRoutes from "./routes/levelRoutes.js";
 import { connectDB } from "./config/db.js";
 
 dotenv.config();
@@ -20,6 +21,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes)
 app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/level", levelRoutes)
+
 // Root route for testing
 app.get("/", (req, res) => {
   res.send("Backend server is running!");
