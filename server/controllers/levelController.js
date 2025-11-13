@@ -1,7 +1,7 @@
-import { Player } from "../models/PlayerModel";
-import { Score } from "../models/ScoreModel";
+import { Player } from "../models/PlayerModel.js";
+import { Score } from "../models/ScoreModel.js";
 
-export const savebeginnerScore = async(req, res) =>{
+export const saveBeginnerScore = async(req, res) =>{
     try{
         const { playerId, scoreValue } = req.body;
 
