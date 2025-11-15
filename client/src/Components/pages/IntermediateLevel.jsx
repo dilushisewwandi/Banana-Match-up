@@ -6,15 +6,15 @@ import axios from "axios";
 const IntermediateLevel = () => {
   const navigate = useNavigate();
 
-  //State Management
+  // State Management
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
+  const [bonusScore, setBonusScore] = useState(0); // track bonus points
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
-  const [timer, setTimer] = useState(60); // 60 seconds per round
+  const [timer, setTimer] = useState(60);
 
-  //Game rounds as state
   const [rounds, setRounds] = useState([
     { clue: "A fruit known as the king of fruits in Asia", options: ["Mango", "Durian", "Papaya", "Lychee", "Banana", "Jackfruit"], answer: "Durian" },
     { clue: "A fruit high in vitamin C, often green or purple", options: ["Grapes", "Kiwi", "Orange", "Guava", "Lime", "Starfruit"], answer: "Kiwi" },
@@ -24,13 +24,13 @@ const IntermediateLevel = () => {
     { clue: "A yellow tropical fruit that's curved and sweet", options: ["Banana", "Plantain", "Mango", "Papaya", "Pineapple", "Durian"], answer: "Banana" },
   ]);
 
-  //Timer logic
+  // Timer logic
   useEffect(() => {
     if (levelComplete) return;
 
     if (timer === 0) {
-      setFeedback("Time's up! ⏰");
-      fetchNewChallenge();
+      setFeedback("Time's up! ⏰ Bonus Game triggered!");
+      fetchBonusChallenge();
       return;
     }
 
@@ -38,10 +38,10 @@ const IntermediateLevel = () => {
     return () => clearInterval(countdown);
   }, [timer, levelComplete]);
 
-  //Bonus challenge with Banana API
-  const fetchNewChallenge = async () => {
+  // Fetch bonus challenge from backend
+  const fetchBonusChallenge = async () => {
     try {
-      const response = await axios.get("https://marcconrad.com/uob/banana/doc.php"); 
+      const response = await axios.get("http://localhost:5000/api/bonus");
       const newChallenge = response.data;
 
       const updatedRounds = [...rounds];
@@ -55,27 +55,30 @@ const IntermediateLevel = () => {
       setFeedback("New Bonus Challenge! 🔢");
       setTimer(60);
     } catch (error) {
-      console.error("Error fetching new challenge:", error);
+      console.error("Error fetching bonus challenge:", error);
       nextRound();
     }
   };
 
-  //Handle answer select
+  // Handle answer selection
   const handleSelect = (option) => {
     if (selected) return;
     setSelected(option);
 
     if (option === rounds[currentRound].answer) {
-      setScore(score + 15); 
-      setFeedback("Correct! +15 🍌");
+      const points = feedback.includes("Bonus") ? 20 : 15; 
+      if (feedback.includes("Bonus")) setBonusScore(prev => prev + points);
+      else setScore(prev => prev + points);
+
+      setFeedback(`Correct! +${points} 🍌`);
       setTimeout(() => nextRound(), 1000);
     } else {
-      setFeedback("Wrong! ❌");
-      setTimeout(() => fetchNewChallenge(), 1000);
+      setFeedback("Wrong! ❌ Bonus triggered!");
+      setTimeout(() => fetchBonusChallenge(), 1000);
     }
   };
 
-  //Move to the next round
+  // Move to next round
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
@@ -84,20 +87,24 @@ const IntermediateLevel = () => {
     else setLevelComplete(true);
   };
 
-  // Save score to backend
+  // Save total score (regular + bonus) to backend
   const saveScore = async () => {
     try {
       const playerId = localStorage.getItem("playerId");
-      await axios.post("http://localhost:5000/api/level/intermediate", { playerId, scoreValue: score });
-      console.log("Intermediate score saved!");
+      await axios.post("http://localhost:5000/api/level/intermediate", {
+        playerId,
+        scoreValue: score + bonusScore,
+        level: "Intermediate"
+      });
+      console.log("Intermediate score with bonus saved!");
     } catch (error) {
       console.error("Error saving intermediate score:", error);
     }
   };
 
-  //Level complete screen
+  // Level complete screen
   if (levelComplete) {
-    saveScore(); // automatically save score
+    saveScore(); // automatically save total score
     return (
       <div
         className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
@@ -107,7 +114,7 @@ const IntermediateLevel = () => {
           🎉 Intermediate Level Complete!
         </motion.h1>
         <motion.p className="text-2xl mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          Your Score: {score} 🍌
+          Your Score: {score} 🍌 + Bonus: {bonusScore} 🔢
         </motion.p>
         <button
           onClick={() => navigate("/levels")}
@@ -120,13 +127,13 @@ const IntermediateLevel = () => {
     );
   }
 
-  //Game UI
+  // Game UI
   return (
     <div
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
       style={{ backgroundImage: "url('/Assets/images/Loading.jpg')", backgroundColor: "rgba(0,0,0,0.6)", backgroundBlendMode: "overlay" }}
     >
-      {/* Score & Timer Popup */}
+      {/* Score & Timer */}
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -136,13 +143,9 @@ const IntermediateLevel = () => {
         <div className="text-6xl mb-2 animate-bounce">🐵</div>
         <div className="text-2xl font-extrabold text-yellow-800 tracking-wider uppercase" style={{ fontFamily: "'Comic Neue', cursive" }}>Score</div>
         <div className="text-4xl font-black text-green-800 mt-1 animate-pulse" style={{ fontFamily: "'Press Start 2P', cursive" }}>{score}</div>
+        <div className="text-2xl font-bold text-purple-700 mt-1" style={{ fontFamily: "'Press Start 2P', cursive" }}>Bonus: {bonusScore}</div>
         <div className="mt-2 text-xl font-bold text-red-600 animate-ping" style={{ fontFamily: "'Comic Neue', cursive" }}>⏱ {timer}s</div>
       </motion.div>
-
-      {/* Top bar */}
-      <div className="w-full flex justify-end items-center px-8 mb-12">
-        <div className="text-2xl font-semibold">👤 Player</div>
-      </div>
 
       {/* Round & Clue */}
       <div className="text-center mb-8 px-4">
@@ -150,7 +153,7 @@ const IntermediateLevel = () => {
         <h2 className="text-2xl font-extrabold mt-2 text-yellow-300 drop-shadow-lg" style={{ fontFamily: "'Comic Neue', cursive" }}>{rounds[currentRound].clue}</h2>
       </div>
 
-      {/* Answer Cards - 6 cards */}
+      {/* Answer Cards */}
       <div className="grid grid-cols-3 gap-6 mb-12 mt-10 justify-items-center">
         {rounds[currentRound].options.map((option, index) => (
           <motion.div
@@ -182,7 +185,7 @@ const IntermediateLevel = () => {
         </motion.div>
       )}
 
-      {/* Levels button */}
+      {/* Back to Levels */}
       <button
         onClick={() => navigate("/levels")}
         className="mb-8 bg-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition"
