@@ -1,5 +1,5 @@
 import { sequelize } from "./config/db.js"; 
-import { User } from "./models/UserModel.js"; 
+import { User } from "./models/UserModel.js";
 import { Player } from "./models/PlayerModel.js";
 import { Score } from "./models/ScoreModel.js"; 
 

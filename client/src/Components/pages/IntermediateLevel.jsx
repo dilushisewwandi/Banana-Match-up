@@ -9,7 +9,7 @@ const IntermediateLevel = () => {
   // State Management
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
-  const [bonusScore, setBonusScore] = useState(0); // track bonus points
+  const [bonusScore, setBonusScore] = useState(0); 
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
