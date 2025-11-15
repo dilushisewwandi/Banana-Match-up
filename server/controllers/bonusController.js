@@ -1,5 +1,5 @@
 import axios from "axios";
-import Score from "../models/Score.js";
+import Score from "../models/ScoreModel.js";
 
 //get bonus challenge from Banana API
 export const getBonusChallenge = async (req, res) => {
