@@ -1,11 +1,12 @@
 import { Player } from "../models/PlayerModel";
 import { Score } from "../models/ScoreModel";
 
+//Save beginner level score
 export const savebeginnerScore = async(req, res) =>{
     try{
         const { playerId, scoreValue } = req.body;
 
-        //save score
+        //save beginner score
         await Score.create({playerId, level: "beginner", scoreValue});
 
         //update player's current level to intermediate
@@ -18,3 +19,20 @@ export const savebeginnerScore = async(req, res) =>{
     }
 }
 
+//Save intermediate level score
+export const saveIntermediateScore = async (req, res) => {
+  try {
+    const { playerId, scoreValue } = req.body;
+
+    // Save intermediate score
+    await Score.create({ playerId, level: "intermediate", scoreValue });
+
+    // Update player's current level to advanced)
+    await Player.update({ currentLevel: "advanced" }, { where: { id: playerId } });
+
+    res.status(200).json({ message: "Intermediate score saved, level updated!" });
+  } catch (error) {
+    console.error("Error saving intermediate score:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
