@@ -21,31 +21,26 @@ export const submitBonusScore = async (req, res) => {
     }
 
     // check if existing score record exists
-    let score = await Score.findOne({
-      where: { playerId, level }
-    });
+    let score = await Score.findOne({where: { playerId, level }});
 
     // If no score record → create one
     if (!score) {
       score = await Score.create({
         playerId,
         level,
-        score: 0,
-        bonus: bonusPoints || 0,
-        total: bonusPoints || 0
+        scoreValue: 0,
+        bonusScore: bonusPoints || 0,
       });
       return res.status(201).json({ message: "Bonus saved", score });
     }
 
-    // Update bonus & total score
-    score.bonus += bonusPoints;
-    score.total = score.score + score.bonus;
-
+    // Update existing record
+    score.bonusScore += bonusPoints;
     await score.save();
 
     return res.status(200).json({
       message: "Bonus score updated successfully",
-      updatedScore: score
+      updatedScore: score,
     });
 
   } catch (error) {
