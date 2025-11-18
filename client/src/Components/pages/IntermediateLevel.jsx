@@ -29,7 +29,7 @@ const IntermediateLevel = () => {
     if (levelComplete) return;
 
     if (timer === 0) {
-      setFeedback("Time's up! ⏰ Bonus Game triggered!");
+      setFeedback("Time's up! ⏰ ");
       fetchBonusChallenge();
       return;
     }
@@ -41,7 +41,7 @@ const IntermediateLevel = () => {
   // Fetch bonus challenge from backend
   const fetchBonusChallenge = async () => {
     try {
-      const response = await axios.get("http://localhost:5000/api/bonus");
+      const response = await axios.get("http://localhost:5000/api/bonus/challenge");
       const newChallenge = response.data;
 
       const updatedRounds = [...rounds];
@@ -50,13 +50,30 @@ const IntermediateLevel = () => {
         options: newChallenge.options,
         answer: newChallenge.answer
       };
+
       setRounds(updatedRounds);
       setSelected(null);
       setFeedback("New Bonus Challenge! 🔢");
       setTimer(60);
+
     } catch (error) {
       console.error("Error fetching bonus challenge:", error);
       nextRound();
+    }
+  };
+
+  //Submit bonus score
+  const submitBonusScore = async (points) => {
+    try{
+      const playerId = localStorage.getItem("playerId");
+      await axios.post("http://localhost:5000/api/bonus/score", {
+        playerId,
+        level: "Intermediate",
+        bonusPoints: points,
+      })
+      console.log("Bonus points submitted!");
+    }catch (error){
+      console.error("Error submitting bonus score:", error);
     }
   };
 
@@ -67,8 +84,10 @@ const IntermediateLevel = () => {
 
     if (option === rounds[currentRound].answer) {
       const points = feedback.includes("Bonus") ? 20 : 15; 
-      if (feedback.includes("Bonus")) setBonusScore(prev => prev + points);
-      else setScore(prev => prev + points);
+      if (feedback.includes("Bonus")){
+        setBonusScore(prev => prev + points);
+        submitBonusScore(points);
+      } else setScore(prev => prev + points);
 
       setFeedback(`Correct! +${points} 🍌`);
       setTimeout(() => nextRound(), 1000);
@@ -94,7 +113,6 @@ const IntermediateLevel = () => {
       await axios.post("http://localhost:5000/api/level/intermediate", {
         playerId,
         scoreValue: score + bonusScore,
-        level: "Intermediate"
       });
       console.log("Intermediate score with bonus saved!");
     } catch (error) {
@@ -117,11 +135,11 @@ const IntermediateLevel = () => {
           Your Score: {score} 🍌 + Bonus: {bonusScore} 🔢
         </motion.p>
         <button
-          onClick={() => navigate("/levels")}
+          onClick={() => navigate("/dashboard")}
           className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
           style={{ fontFamily: "'Press Start 2P', cursive" }}
         >
-          Back to Levels ⬅
+          Back to Dashboard ⬅
         </button>
       </div>
     );
@@ -187,11 +205,11 @@ const IntermediateLevel = () => {
 
       {/* Back to Levels */}
       <button
-        onClick={() => navigate("/levels")}
+        onClick={() => navigate("/dashboard")}
         className="mb-8 bg-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition"
         style={{ fontFamily: "'Press Start 2P', cursive" }}
       >
-        ⬅ Back to Levels
+        ⬅ Back to Dashboard
       </button>
     </div>
   );
