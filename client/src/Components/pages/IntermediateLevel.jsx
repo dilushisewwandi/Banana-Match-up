@@ -46,9 +46,9 @@ const IntermediateLevel = () => {
 
       const updatedRounds = [...rounds];
       updatedRounds[currentRound] = {
-        clue: newChallenge.question,
-        options: newChallenge.options,
-        answer: newChallenge.answer
+        clue: newChallenge.question || "Bonus question",
+        options: Array.isArray(newChallenge.options) ? newChallenge.options : [],
+        answer: newChallenge.answer || ""
       };
 
       setRounds(updatedRounds);
@@ -62,11 +62,11 @@ const IntermediateLevel = () => {
     }
   };
 
-  //Submit bonus score
+  // Submit bonus score
   const submitBonusScore = async (points) => {
     try{
       const playerId = localStorage.getItem("playerId");
-      await axios.post("http://localhost:5000/api/bonus/score", {
+      await axios.post("http://localhost:5000/api/bonus/submit", {
         playerId,
         level: "Intermediate",
         bonusPoints: points,
@@ -102,8 +102,11 @@ const IntermediateLevel = () => {
     setSelected(null);
     setFeedback("");
     setTimer(60);
-    if (currentRound < rounds.length - 1) setCurrentRound(currentRound + 1);
-    else setLevelComplete(true);
+    if (currentRound >= rounds.length - 1) {
+      setLevelComplete(true);
+    } else {
+      setCurrentRound(currentRound + 1);
+    }
   };
 
   // Save total score (regular + bonus) to backend
@@ -120,9 +123,13 @@ const IntermediateLevel = () => {
     }
   };
 
+  // Save score only once when level completes
+  useEffect(() => {
+    if (levelComplete) saveScore();
+  }, [levelComplete]);
+
   // Level complete screen
   if (levelComplete) {
-    saveScore(); // automatically save total score
     return (
       <div
         className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
@@ -168,26 +175,28 @@ const IntermediateLevel = () => {
       {/* Round & Clue */}
       <div className="text-center mb-8 px-4">
         <p className="text-xl font-bold text-yellow-200 tracking-wide animate-pulse">Round {currentRound + 1}/{rounds.length}</p>
-        <h2 className="text-2xl font-extrabold mt-2 text-yellow-300 drop-shadow-lg" style={{ fontFamily: "'Comic Neue', cursive" }}>{rounds[currentRound].clue}</h2>
+        <h2 className="text-2xl font-extrabold mt-2 text-yellow-300 drop-shadow-lg" style={{ fontFamily: "'Comic Neue', cursive" }}>{rounds[currentRound]?.clue}</h2>
       </div>
 
       {/* Answer Cards */}
       <div className="grid grid-cols-3 gap-6 mb-12 mt-10 justify-items-center">
-        {rounds[currentRound].options.map((option, index) => (
-          <motion.div
-            key={index}
-            whileHover={{ scale: 1.1, rotate: 2 }}
-            whileTap={{ scale: 0.95, rotate: -2 }}
-            className={`
-              w-36 h-36 bg-yellow-400 flex items-center justify-center rounded-3xl text-lg font-bold cursor-pointer border-4 border-yellow-500 shadow-2xl transition-all
-              ${selected === option && option === rounds[currentRound].answer ? "bg-green-400 border-green-600 shadow-green-400/60" : ""}
-              ${selected === option && option !== rounds[currentRound].answer ? "bg-red-400 border-red-600 shadow-red-400/60" : ""}
-            `}
-            onClick={() => handleSelect(option)}
-          >
-            <span style={{ fontFamily: "'Press Start 2P', cursive" }}>{option}</span>
-          </motion.div>
-        ))}
+        {rounds[currentRound]?.options?.length > 0 &&
+          rounds[currentRound].options.map((option, index) => (
+            <motion.div
+              key={index}
+              whileHover={{ scale: 1.1, rotate: 2 }}
+              whileTap={{ scale: 0.95, rotate: -2 }}
+              className={`
+                w-36 h-36 bg-yellow-400 flex items-center justify-center rounded-3xl text-lg font-bold cursor-pointer border-4 border-yellow-500 shadow-2xl transition-all
+                ${selected === option && option === rounds[currentRound].answer ? "bg-green-400 border-green-600 shadow-green-400/60" : ""}
+                ${selected === option && option !== rounds[currentRound].answer ? "bg-red-400 border-red-600 shadow-red-400/60" : ""}
+              `}
+              onClick={() => handleSelect(option)}
+            >
+              <span style={{ fontFamily: "'Press Start 2P', cursive" }}>{option}</span>
+            </motion.div>
+          ))
+        }
       </div>
 
       {/* Feedback */}
