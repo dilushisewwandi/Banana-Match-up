@@ -22,18 +22,25 @@ export const saveBeginnerScore = async(req, res) =>{
 
 //Save intermediate level score
 export const saveIntermediateScore = async (req, res) => {
+  const { playerId, scoreValue } = req.body;
+
+  if (!playerId || scoreValue === undefined) {
+    return res.status(400).json({ message: "playerId and scoreValue required" });
+  }
+
   try {
-    const { playerId, scoreValue } = req.body;
+    const newScore = await Score.create({
+      playerId,
+      level: "intermediate",
+      scoreValue,
+    });
 
-    // Save intermediate score
-    await Score.create({ playerId, level: "intermediate", scoreValue });
-
-    // Update player's current level to advanced)
-    await Player.update({ currentLevel: "advanced" }, { where: { playerId } });
-
-    res.status(200).json({ message: "Intermediate score saved" });
-  } catch (error) {
-    console.error("Error saving intermediate score:", error);
-    res.status(500).json({ error: "Internal server error" });
+    return res.status(201).json({
+      message: "Intermediate score saved",
+      scoreId: newScore.id,
+    });
+  } catch (err) {
+    console.error("Sequelize save error:", err);
+    return res.status(500).json({ message: "Database error" });
   }
 };
