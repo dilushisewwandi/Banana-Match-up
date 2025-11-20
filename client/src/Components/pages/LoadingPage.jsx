@@ -13,7 +13,7 @@ const LoadingPage = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-      setTimeout(() => navigate("/welcome"), 500);
+      setTimeout(() => navigate("/auth"), 500);
     }, 3000);
     return () => clearTimeout(timer);
   }, [navigate]);

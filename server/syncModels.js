@@ -1,11 +1,11 @@
 import { sequelize } from "./config/db.js"; 
-import { User } from "./models/UserModel.js"; 
+import { User } from "./models/UserModel.js";
 import { Player } from "./models/PlayerModel.js";
 import { Score } from "./models/ScoreModel.js"; 
 
 const syncModels = async () => {
   try {
-    await sequelize.sync({ force: true }); // drop & recreate tables
+    await sequelize.sync({ alter: true }); // drop & recreate tables
     console.log("All models synced successfully!");
     console.log("Tables created:", Object.keys(sequelize.models));
 

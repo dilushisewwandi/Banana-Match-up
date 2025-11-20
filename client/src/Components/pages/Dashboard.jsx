@@ -1,93 +1,117 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import axios from "axios";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const [playerName, setPlayerName] = useState("Player");
   const [scores, setScores] = useState({
     beginner: 0,
     intermediate: 0,
     advanced: 0,
+    totalScore: 0,
   });
 
   useEffect(() => {
-    // 🧠 Load saved scores from localStorage
-    const savedName = localStorage.getItem("playerName");
-    const beginner = parseInt(localStorage.getItem("beginnerScore")) || 0;
-    const intermediate = parseInt(localStorage.getItem("intermediateScore")) || 0;
-    const advanced = parseInt(localStorage.getItem("advancedScore")) || 0;
+    const fetchDashboardData = async () => {
+      try{
+        //get logged-in playerId assuming localStorage after the user login
+        const playerId = localStorage.getItem("playerId");
 
-    if (savedName) setPlayerName(savedName);
-    setScores({ beginner, intermediate, advanced });
+        if(!playerId){
+          console.error("No player found in localStorage.");
+          return;
+        }
+
+        //fetch player data from backend
+        const res = await axios.get(`http://localhost:5000/api/dashboard?playerId=${playerId}`);
+        setScores(res.data);
+
+      }catch(error){
+        console.error("Error fetching dashboard data:", error);
+      }
+    };
+
+    fetchDashboardData();
   }, []);
 
-  const totalScore = scores.beginner + scores.intermediate + scores.advanced;
-
   return (
-    <div
-      className="min-h-screen bg-cover bg-center flex flex-col items-center justify-start text-white p-10"
-      style={{
-        backgroundImage: "url('/Assets/images/Loading.jpg')",
-        backgroundColor: "rgba(0,0,0,0.5)",
-        backgroundBlendMode: "overlay",
-      }}
-    >
-      {/* Title */}
-      <motion.h1
-        className="text-5xl font-bold mb-6 text-yellow-300 drop-shadow-lg"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-      >
-        🍌 Welcome, {playerName}! 🐵
-      </motion.h1>
+    <div className="relative min-h-screen flex flex-col items-center justify-start text-yellow-900 font-playful bg-gradient-to-b from-yellow-50 via-yellow-100 to-yellow-200 overflow-hidden">
+
+      {/* Floating Bananas (4 big ones) */}
+      <motion.img
+        src="/Assets/images/banana.png"
+        alt="banana"
+        className="absolute top-16 left-10 w-44 md:w-52 opacity-90"
+        animate={{ y: [0, -25, 0], rotate: [0, 15, -15, 0] }}
+        transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.img
+        src="/Assets/images/banana.png"
+        alt="banana"
+        className="absolute top-24 right-16 w-48 md:w-56 opacity-85"
+        animate={{ x: [0, 20, -20, 0], rotate: [0, -10, 10, 0] }}
+        transition={{ duration: 2.8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.img
+        src="/Assets/images/banana.png"
+        alt="banana"
+        className="absolute bottom-24 left-20 w-48 md:w-56 opacity-85"
+        animate={{ y: [0, 20, -20, 0], rotate: [0, -12, 12, 0] }}
+        transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.img
+        src="/Assets/images/banana.png"
+        alt="banana"
+        className="absolute bottom-20 right-24 w-52 md:w-60 opacity-80"
+        animate={{ y: [0, -15, 15, 0], rotate: [0, 10, -10, 0] }}
+        transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+      />
 
       {/* Score Summary */}
       <motion.div
-        className="bg-yellow-100/90 backdrop-blur-md rounded-3xl p-8 w-full max-w-3xl shadow-2xl border-4 border-yellow-400 mb-10"
+        className="bg-yellow-50/90 backdrop-blur-md rounded-3xl p-8 w-full max-w-3xl shadow-2xl border-4 border-yellow-300 mt-16 mb-10"
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
       >
-        <h2 className="text-3xl font-bold text-green-800 mb-4 text-center">
+        <h2 className="text-3xl font-bold text-yellow-800 mb-4 text-center">
           Your Progress
         </h2>
 
-        {/* Level Scores */}
         <div className="grid grid-cols-3 gap-4 text-center">
-          <div className="bg-yellow-300 rounded-2xl py-4 shadow-lg">
+          <div className="bg-yellow-200 rounded-2xl py-4 shadow-lg">
             <h3 className="text-xl font-bold text-yellow-900">Beginner</h3>
-            <p className="text-3xl font-extrabold text-green-800">
+            <p className="text-3xl font-extrabold text-yellow-800">
               {scores.beginner} 🍌
             </p>
           </div>
 
-          <div className="bg-yellow-300 rounded-2xl py-4 shadow-lg">
+          <div className="bg-yellow-200 rounded-2xl py-4 shadow-lg">
             <h3 className="text-xl font-bold text-yellow-900">Intermediate</h3>
-            <p className="text-3xl font-extrabold text-green-800">
+            <p className="text-3xl font-extrabold text-yellow-800">
               {scores.intermediate} 🍌
             </p>
           </div>
 
-          <div className="bg-yellow-300 rounded-2xl py-4 shadow-lg">
+          <div className="bg-yellow-200 rounded-2xl py-4 shadow-lg">
             <h3 className="text-xl font-bold text-yellow-900">Advanced</h3>
-            <p className="text-3xl font-extrabold text-green-800">
+            <p className="text-3xl font-extrabold text-yellow-800">
               {scores.advanced} 🍌
             </p>
           </div>
         </div>
 
-        {/* Total */}
-        <div className="text-center mt-6 text-2xl font-bold text-green-900">
-          🏆 Total Score: <span className="text-3xl">{totalScore} 🍌</span>
+        <div className="text-center mt-6 text-2xl font-bold text-yellow-900">
+          🏆 Total Score: <span className="text-3xl">{scores.totalScore} 🍌</span>
         </div>
       </motion.div>
 
-      {/* Level Buttons */}
+      {/* Buttons Section */}
       <div className="flex flex-wrap gap-6 justify-center">
         <motion.button
           onClick={() => navigate("/beginner")}
           whileHover={{ scale: 1.1 }}
-          className="bg-yellow-400 text-green-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-500 transition"
+          className="bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-400 transition"
         >
           ▶ Start Beginner
         </motion.button>
@@ -95,7 +119,7 @@ const Dashboard = () => {
         <motion.button
           onClick={() => navigate("/intermediate")}
           whileHover={{ scale: 1.1 }}
-          className="bg-yellow-400 text-green-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-500 transition"
+          className="bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-400 transition"
         >
           ▶ Start Intermediate
         </motion.button>
@@ -103,22 +127,33 @@ const Dashboard = () => {
         <motion.button
           onClick={() => navigate("/advanced")}
           whileHover={{ scale: 1.1 }}
-          className="bg-yellow-400 text-green-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-500 transition"
+          className="bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-400 transition"
         >
           ▶ Start Advanced
         </motion.button>
       </div>
 
-      {/* Logout */}
-      <button
-        onClick={() => {
-          localStorage.clear();
-          navigate("/");
-        }}
-        className="mt-10 bg-red-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-red-600 transition"
-      >
-        🚪 Logout
-      </button>
+      {/* Leaderboard + Logout */}
+      <div className="flex gap-6 mt-10">
+        <motion.button
+          onClick={() => navigate("/leaderboard")}
+          whileHover={{ scale: 1.1 }}
+          className="bg-amber-200 text-yellow-900 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-amber-300 transition"
+        >
+          🏅 Leaderboard
+        </motion.button>
+
+        <motion.button
+          onClick={() => {
+            localStorage.clear();
+            navigate("/");
+          }}
+          whileHover={{ scale: 1.1 }}
+          className="bg-yellow-600 text-yellow-100 px-8 py-3 rounded-xl font-bold shadow-md hover:bg-yellow-700 transition"
+        >
+          🚪 Logout
+        </motion.button>
+      </div>
     </div>
   );
 };
