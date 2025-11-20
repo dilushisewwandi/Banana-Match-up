@@ -2,12 +2,17 @@ import React, { useEffect } from "react";
 import { motion } from "framer-motion";
 import axios from "axios";
 
-const LevelComplete = ({ score, bonus, unlockScore, playerId, onBack }) => {
+const LevelComplete = ({ score = 0, bonus = 0, unlockScore, playerId, onBack }) => {
   const total = score + bonus;
   const unlocked = total >= unlockScore;
 
-  // Save on mount
   useEffect(() => {
+    if (!playerId) {
+      console.error("Player ID missing. Score not saved.");
+      return;
+    }
+
+  // Save on mount
     const save = async () => {
       try {
         await axios.post("http://localhost:5000/api/level/intermediate", {
