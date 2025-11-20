@@ -1,7 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import BonusGame from "./BonusGame";
+import LevelComplete from "./LevelComplete";
+
+const SCORE_THRESHOLD = 90; 
+const BONUS_POINTS = 20; 
 
 const IntermediateLevel = () => {
   const navigate = useNavigate();
@@ -9,13 +13,14 @@ const IntermediateLevel = () => {
   // State Management
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
-  const [bonusScore, setBonusScore] = useState(0); 
+  const [bonusScore, setBonusScore] = useState(0);
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
   const [timer, setTimer] = useState(60);
+  const [isBonusActive, setBonusActive] = useState(false);
 
-  const [rounds, setRounds] = useState([
+  const [rounds] = useState([
     { clue: "A fruit known as the king of fruits in Asia", options: ["Mango", "Durian", "Papaya", "Lychee", "Banana", "Jackfruit"], answer: "Durian" },
     { clue: "A fruit high in vitamin C, often green or purple", options: ["Grapes", "Kiwi", "Orange", "Guava", "Lime", "Starfruit"], answer: "Kiwi" },
     { clue: "A tropical fruit with spiky skin and sweet yellow flesh", options: ["Pineapple", "Mango", "Jackfruit", "Papaya", "Lychee", "Banana"], answer: "Pineapple" },
@@ -24,135 +29,79 @@ const IntermediateLevel = () => {
     { clue: "A yellow tropical fruit that's curved and sweet", options: ["Banana", "Plantain", "Mango", "Papaya", "Pineapple", "Durian"], answer: "Banana" },
   ]);
 
-  // Timer logic
+  // Timer logic 
   useEffect(() => {
-    if (levelComplete) return;
+    if (levelComplete || isBonusActive) return;
 
     if (timer === 0) {
-      setFeedback("Time's up! ⏰ ");
-      fetchBonusChallenge();
+      setFeedback("Time's up! ⏰");
+      setTimeout(() => nextRound(), 1000);
       return;
     }
 
     const countdown = setInterval(() => setTimer(prev => prev - 1), 1000);
     return () => clearInterval(countdown);
-  }, [timer, levelComplete]);
-
-  // Fetch bonus challenge from backend
-  const fetchBonusChallenge = async () => {
-    try {
-      const response = await axios.get("http://localhost:5000/api/bonus/challenge");
-      const newChallenge = response.data;
-
-      const updatedRounds = [...rounds];
-      updatedRounds[currentRound] = {
-        clue: newChallenge.question || "Bonus question",
-        options: Array.isArray(newChallenge.options) ? newChallenge.options : [],
-        answer: newChallenge.answer || ""
-      };
-
-      setRounds(updatedRounds);
-      setSelected(null);
-      setFeedback("New Bonus Challenge! 🔢");
-      setTimer(60);
-
-    } catch (error) {
-      console.error("Error fetching bonus challenge:", error);
-      nextRound();
-    }
-  };
-
-  // Submit bonus score
-  const submitBonusScore = async (points) => {
-    try{
-      const playerId = localStorage.getItem("playerId");
-      await axios.post("http://localhost:5000/api/bonus/submit", {
-        playerId,
-        level: "Intermediate",
-        bonusPoints: points,
-      })
-      console.log("Bonus points submitted!");
-    }catch (error){
-      console.error("Error submitting bonus score:", error);
-    }
-  };
+  }, [timer, levelComplete, isBonusActive]);
 
   // Handle answer selection
   const handleSelect = (option) => {
-    if (selected) return;
+    if (selected || isBonusActive) return;
     setSelected(option);
 
     if (option === rounds[currentRound].answer) {
-      const points = feedback.includes("Bonus") ? 20 : 15; 
-      if (feedback.includes("Bonus")){
-        setBonusScore(prev => prev + points);
-        submitBonusScore(points);
-      } else setScore(prev => prev + points);
-
-      setFeedback(`Correct! +${points} 🍌`);
-      setTimeout(() => nextRound(), 1000);
+      setScore(prev => prev + 15);
+      setFeedback("Correct! +15 🍌");
     } else {
-      setFeedback("Wrong! ❌ Bonus triggered!");
-      setTimeout(() => fetchBonusChallenge(), 1000);
+      setFeedback("Wrong! ❌ No points for this round");
     }
+
+    setTimeout(() => nextRound(), 1000);
   };
 
-  // Move to next round
+  // Move to next round or trigger bonus game 
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
     setTimer(60);
+
     if (currentRound >= rounds.length - 1) {
-      setLevelComplete(true);
+      // All rounds finished → show BONUS
+      setBonusActive(true);
     } else {
-      setCurrentRound(currentRound + 1);
+      setCurrentRound(prev => prev + 1);
     }
   };
 
-  // Save total score (regular + bonus) to backend
-  const saveScore = async () => {
-    try {
-      const playerId = localStorage.getItem("playerId");
-      await axios.post("http://localhost:5000/api/level/intermediate", {
-        playerId,
-        scoreValue: score + bonusScore,
-      });
-      console.log("Intermediate score with bonus saved!");
-    } catch (error) {
-      console.error("Error saving intermediate score:", error);
-    }
+  const handleBonusComplete = (points) => {
+    setBonusScore(points);
+    setBonusActive(false);
+    setLevelComplete(true);
   };
 
-  // Save score only once when level completes
-  useEffect(() => {
-    if (levelComplete) saveScore();
-  }, [levelComplete]);
-
-  // Level complete screen
-  if (levelComplete) {
+  // Render BonusGame only
+  if (isBonusActive) {
     return (
-      <div
-        className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
-        style={{ backgroundImage: "url('/Assets/images/Loading.jpg')", backgroundColor: "rgba(0,0,0,0.5)", backgroundBlendMode: "overlay" }}
-      >
-        <motion.h1 className="text-5xl font-bold mb-4" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-          🎉 Intermediate Level Complete!
-        </motion.h1>
-        <motion.p className="text-2xl mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          Your Score: {score} 🍌 + Bonus: {bonusScore} 🔢
-        </motion.p>
-        <button
-          onClick={() => navigate("/dashboard")}
-          className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
-          style={{ fontFamily: "'Press Start 2P', cursive" }}
-        >
-          Back to Dashboard ⬅
-        </button>
-      </div>
+      <BonusGame
+        playerId={localStorage.getItem("playerId")}
+        onComplete={() => handleBonusComplete(BONUS_POINTS)} 
+      />
     );
   }
 
-  // Game UI
+  // Render LevelComplete screen
+  if (levelComplete) {
+    return (
+      <LevelComplete
+        score={score}
+        bonus={bonusScore}
+        unlockScore={SCORE_THRESHOLD}
+        playerId={localStorage.getItem("playerId")}
+        onBack={() => navigate("/dashboard")}
+      />
+    );
+  }
+
+  // Game UI 
   return (
     <div
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
