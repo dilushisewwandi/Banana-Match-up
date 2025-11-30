@@ -21,7 +21,16 @@ export const Score = sequelize.define(
         level: {
             type: DataTypes.STRING,
             allowNull: false,
-        }
+        },
+        playerId:{
+            type: DataTypes.INTEGER,
+            allowNull:false,
+            references:{
+                model:"players",
+                key:"playerId",
+            },
+            onDelete:"CASCADE",
+        },
     },
     {
         tableName: "scores",
