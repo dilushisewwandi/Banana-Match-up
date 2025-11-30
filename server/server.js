@@ -7,6 +7,11 @@ import dashboardRoutes from "./routes/dashboardRoutes.js";
 import levelRoutes from "./routes/levelRoutes.js";
 import { connectDB } from "./config/db.js";
 
+// Import models to initialize them and their associations(fixed by github copilot)
+import { User } from "./models/UserModel.js";
+import { Player } from "./models/PlayerModel.js";
+import { Score } from "./models/ScoreModel.js";
+
 dotenv.config();
 const app = express();
 

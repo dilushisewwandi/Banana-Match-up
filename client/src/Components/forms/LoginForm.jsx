@@ -42,6 +42,15 @@ const LoginForm = () => {
 
         //Save token and clear form
         localStorage.setItem("token", data.token);
+
+        //save player data for dashboard
+        if (data.player){
+          localStorage.setItem("player", JSON.stringify(data.player));
+          localStorage.setItem("playerId", data.player.playerId);
+        }
+
+        
+
         setFormData({ email: "", password: "" });
 
         //Wait for toast → THEN navigate

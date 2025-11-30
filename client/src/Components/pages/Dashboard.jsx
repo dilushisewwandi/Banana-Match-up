@@ -11,6 +11,7 @@ const Dashboard = () => {
     advanced: 0,
     totalScore: 0,
   });
+  const [currentLevel, setCurrentLevel] = useState("beginner");
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -20,12 +21,14 @@ const Dashboard = () => {
 
         if(!playerId){
           console.error("No player found in localStorage.");
+          navigate("/auth");
           return;
         }
 
         //fetch player data from backend
         const res = await axios.get(`http://localhost:5000/api/dashboard?playerId=${playerId}`);
         setScores(res.data);
+        setCurrentLevel(res.data.currentLevel);
 
       }catch(error){
         console.error("Error fetching dashboard data:", error);
@@ -33,7 +36,7 @@ const Dashboard = () => {
     };
 
     fetchDashboardData();
-  }, []);
+  }, [navigate]);
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start text-yellow-900 font-playful bg-gradient-to-b from-yellow-50 via-yellow-100 to-yellow-200 overflow-hidden">
@@ -117,18 +120,20 @@ const Dashboard = () => {
         </motion.button>
 
         <motion.button
-          onClick={() => navigate("/intermediate")}
+          onClick={() => currentLevel === "intermediate" && navigate("/intermediate")}
           whileHover={{ scale: 1.1 }}
-          className="bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-400 transition"
+         className={`bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl transition
+            ${currentLevel === "beginner" ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-400"}`}
         >
           ▶ Start Intermediate
         </motion.button>
 
         <motion.button
-          onClick={() => navigate("/advanced")}
+          onClick={() => currentLevel === "advanced" && navigate("/advanced")}
           whileHover={{ scale: 1.1 }}
-          className="bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl hover:bg-yellow-400 transition"
-        >
+         className={`bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl transition
+            ${currentLevel !== "advanced" ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-400"}`}
+          >
           ▶ Start Advanced
         </motion.button>
       </div>

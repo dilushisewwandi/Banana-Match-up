@@ -6,7 +6,7 @@ import { sequelize } from "../config/db.js";
 export const saveBeginnerScore = async(req, res) =>{
 
     try{
-        const { playerId, scoreValue } = req.body;
+        let { playerId, scoreValue } = req.body;
 
         //input validation
         playerId = parseInt(playerId, 10);
@@ -18,8 +18,8 @@ export const saveBeginnerScore = async(req, res) =>{
 
         //check if player exists
         const player = await Player.findByPk(playerId);
-        if(!playerId){
-          return res.status(404).json({message:"Player not fount"});
+        if(!player){
+          return res.status(404).json({message:"Player not found"});
         }
 
         //ensure both score and player successfully updated

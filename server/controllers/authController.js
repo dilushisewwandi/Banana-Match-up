@@ -60,13 +60,31 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    //fetch player
+    const player = await Player.findOne({ where: { userId: user.userId } });
+
+    if (!player) {
+      return res.status(404).json({ message: "Player profile missing" });
+    }
+
     // Create JWT token
     const token = jwt.sign(
       { id: user.userId, email:user.email },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
-    return res.json({ message: "Login successful", token });
+   return res.json({ message: "Login successful", 
+    token, 
+    player:{
+      userId: player.userId, 
+      playerId: player.playerId,
+      totalScore:player.totalScore,
+      bananaCount:player.bananaCount,
+      level:player.level
+    }
+    
+  });
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: "Server error while logging in" });
