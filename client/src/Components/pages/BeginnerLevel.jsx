@@ -17,7 +17,8 @@ const BeginnerLevel = () => {
   const saveScore = async () => {
   try {
     //get logged-in playerId assuming localStorage after the user login
-    const playerId = localStorage.getItem("playerId"); 
+    let playerId = parseInt(localStorage.getItem("playerId"),10);
+    if (!playerId) throw new Error("Player ID not found");
 
     await axios.post("http://localhost:5000/api/level/beginner", {
       playerId,
