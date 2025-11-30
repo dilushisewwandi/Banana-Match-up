@@ -1,5 +1,6 @@
 import { Player } from "../models/PlayerModel.js";
 import { Score } from "../models/ScoreModel.js";
+import { sequelize } from "../config/db.js";
 
 //Save beginner level score
 export const saveBeginnerScore = async(req, res) =>{
@@ -7,18 +8,37 @@ export const saveBeginnerScore = async(req, res) =>{
     try{
         const { playerId, scoreValue } = req.body;
 
-        //save beginner score
-        await Score.create({playerId, level: "beginner", scoreValue});
+        //input validation
+        playerId = parseInt(playerId, 10);
+        scoreValue = Number(scoreValue);
 
-        //update player's current level to intermediate
-        await Player.update({ currentLevel: "intermediate"}, {where: { playerId }});
+        if(!playerId || isNaN(scoreValue)){
+          return res.status(400).json({message: "Invalid playerId or scoreValue"});
+        }
 
-        res.status(200).json({message: "Beginner score saved"});
-    } catch (error){
+        //check if player exists
+        const player = await Player.findByPk(playerId);
+        if(!playerId){
+          return res.status(404).json({message:"Player not fount"});
+        }
+
+        //ensure both score and player successfully updated
+        await sequelize.transaction(async (t) => {
+          //save score
+          await Score.create({playerId, level:"beginner", scoreValue}, {transaction:t});
+
+          //update current level and total score
+          await Player.update({ currentLevel:"intermediate", totalScore: player.totalScore + scoreValue,},
+            {where:{playerId}, transaction: t}
+          );
+        });
+
+        return res.status(200).json({message:"Beginner score saved successfully"});
+      } catch (error){
         console.error("Error saving beginner score:", error);
         res.status(500).json({ error: "Internal server error" });
     }
-}
+};
 
 //Save intermediate level score
 export const saveIntermediateScore = async (req, res) => {
