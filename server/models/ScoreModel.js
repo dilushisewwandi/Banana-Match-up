@@ -38,6 +38,4 @@ export const Score = sequelize.define(
     }
 );
 
-//Associations
-Player.hasMany(Score, {foreignKey: "playerId", onDelete: "CASCADE"});
-Score.belongsTo(Player, {foreignKey: "playerId"});
+export default Score;
