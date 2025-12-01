@@ -10,14 +10,27 @@ export const Player = sequelize.define(
             autoIncrement: true,
             primaryKey: true,
         },
+
+        userId:{
+            type: DataTypes.INTEGER,
+            allowNull: false,
+            references:{
+                model:"users",
+                key:"userId",
+            },
+            onDelete: "CASCADE",
+        },
+
         totalScore:{
             type: DataTypes.INTEGER,
             defaultValue: 0,
         },
+
         bananaCount:{
             type: DataTypes.INTEGER,
             defaultValue: 0,
         },
+
         currentLevel:{
             type: DataTypes.STRING,
             defaultValue: "beginner",
@@ -29,6 +42,4 @@ export const Player = sequelize.define(
     }
 );
 
-//Associations
-User.hasOne(Player, { foreignKey: "userId"});
-Player.belongsTo(User, { foreignKey: "userId"});
+export default Player;
