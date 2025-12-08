@@ -1,7 +1,5 @@
 import { sequelize } from "./config/db.js"; 
-import { User } from "./models/UserModel.js";
-import { Player } from "./models/PlayerModel.js";
-import { Score } from "./models/ScoreModel.js"; 
+import "./models/index.js";
 
 const syncModels = async () => {
   try {

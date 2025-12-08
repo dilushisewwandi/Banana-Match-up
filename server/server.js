@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import levelRoutes from "./routes/levelRoutes.js";
+import bananaRoutes from "./routes/bananaRoutes.js";
 import { connectDB } from "./config/db.js";
 
 // Import models to initialize them and their associations(fixed by github copilot)
@@ -26,8 +27,8 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/level", levelRoutes);
-
+app.use("/api/levels", levelRoutes);
+app.use("/api/banana", bananaRoutes);
 
 // Root route for testing
 app.get("/", (req, res) => {
@@ -43,3 +44,5 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+

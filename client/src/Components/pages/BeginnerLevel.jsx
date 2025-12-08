@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import axios from "axios"; 
@@ -12,6 +12,22 @@ const BeginnerLevel = () => {
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
+  const [rounds, setRounds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRounds = async () =>{
+      try{
+        const levelId = 1;
+        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${levelId}`);
+        setRounds(res.data.rounds);
+        setLoading(false);
+      }catch(err){
+        console.error("Error fetching rounds:", err);
+      }
+    };
+    fetchRounds();
+  }, []);
 
   //Function to save score to backend
   const saveScore = async () => {
@@ -20,8 +36,9 @@ const BeginnerLevel = () => {
     let playerId = parseInt(localStorage.getItem("playerId"),10);
     if (!playerId) throw new Error("Player ID not found");
 
-    await axios.post("http://localhost:5000/api/level/beginner", {
+    await axios.post("http://localhost:5000/api/levels/save/beginner", {
       playerId,
+      levelId: 1,
       scoreValue: score,
     });
     console.log("Beginner score saved!");
@@ -30,24 +47,18 @@ const BeginnerLevel = () => {
   }
 };
 
-  //Game rounds
-  const rounds = [
-    { clue: "A yellow fruit monkeys love", options: ["Apple", "Banana", "Mango", "Orange"], answer: "Banana" },
-    { clue: "A red fruit often used in juice", options: ["Apple", "Kiwi", "Pear", "Papaya"], answer: "Apple" },
-    { clue: "A fruit that's orange in color", options: ["Banana", "Orange", "Guava", "Lemon"], answer: "Orange" },
-    { clue: "A tropical fruit with rough skin", options: ["Pineapple", "Mango", "Melon", "Papaya"], answer: "Pineapple" },
-    { clue: "A small red fruit often used in jam", options: ["Grape", "Strawberry", "Peach", "Plum"], answer: "Strawberry" },
-  ];
-
 
   //Handle selecting an option
   const handleSelect = (option) => {
     if (selected) return;//prevent multiple selects
     setSelected(option);
 
-    if (option === rounds[currentRound].answer) {
+    const correct = rounds[currentRound].answer;
+
+    if (option === correct) {
       setScore(score + 10);
       setFeedback("Correct! +10 🍌");
+
       setTimeout(() => nextRound(), 1000);
     } else {
       setFeedback("Try again! ❌");
@@ -59,10 +70,24 @@ const BeginnerLevel = () => {
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
-    if (currentRound < rounds.length - 1) setCurrentRound(currentRound + 1);
-    else setLevelComplete(true);
+
+    if (currentRound < rounds.length - 1) {
+      setCurrentRound(currentRound + 1);
+    }else {
+      setLevelComplete(true); 
+    }
   };
 
+  //show loading screen
+  if(loading){
+    return(
+      <div className="min-h-screen flex items-center justify-center text-white text-4xl">
+        Loading....
+      </div>
+    );
+  }
+
+  //level complete screen
   if (levelComplete) {
     return (
       <div
@@ -79,7 +104,7 @@ const BeginnerLevel = () => {
         <motion.p className="text-2xl mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           Your Score: {score} 🍌
         </motion.p>
-        <button
+        {/* <button
           onClick={async () => {
             await saveScore();
             navigate("/intermediate");
@@ -89,7 +114,26 @@ const BeginnerLevel = () => {
           className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
         >
           Next Level ➜
+        </button> */}
+        <button
+          onClick={async () => {
+            await saveScore();
+            navigate("/level-complete", {
+              state: {
+                score,
+                bonusBananas: 0,
+                bonusPoints: 0,
+                intermediateTotal: score,  // for beginner, total = score
+                unlocked: true,            // beginner always unlocks intermediate
+                level: "beginner"
+              }
+            });
+          }}
+          className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
+        >
+          Continue ➜
         </button>
+
       </div>
     );
   }
@@ -177,3 +221,10 @@ const BeginnerLevel = () => {
 };
 
 export default BeginnerLevel;
+
+
+
+
+
+
+
