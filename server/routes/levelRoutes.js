@@ -1,9 +1,11 @@
 import express from "express";
-import { saveBeginnerScore, saveIntermediateScore } from "../controllers/levelController.js"
-
+import {getRoundsByLevel, saveIntermediateScore, saveBeginnerScore } from "../controllers/levelController.js";
 const router = express.Router();
 
-router.post("/beginner", saveBeginnerScore);
-router.post("/intermediate", saveIntermediateScore);
+router.get("/rounds/:levelId", getRoundsByLevel); 
+
+router.post("/save/beginner", saveBeginnerScore);
+router.post("/save/intermediate", saveIntermediateScore);
+// router.post("/save/advanced", saveAdvancedScore); 
 
 export default router;

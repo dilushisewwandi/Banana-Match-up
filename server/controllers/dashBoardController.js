@@ -1,3 +1,5 @@
+import { where } from 'sequelize';
+import Level from '../models/LevelModel.js';
 import { Player } from '../models/PlayerModel.js';
 import { Score } from '../models/ScoreModel.js';
 
@@ -10,9 +12,9 @@ export const getDashboardData = async (req, res) => {
         }
 
         // Fetch total player score per level
-        const beginnerScore = await Score.sum('scoreValue', { where: { playerId, level: 'beginner' } }) || 0;
-        const intermediateScore = await Score.sum('scoreValue', {where: {playerId, level: 'intermediate'}}) || 0;
-        const advancedScore = await Score.sum('scoreValue', {where: {playerId, level: 'advanced'}}) || 0;
+        const beginnerScore = await Score.sum('scoreValue', { where: { playerId}, include: [{model: Level, where:{name: "beginner"}}] }) || 0;
+        const intermediateScore = await Score.sum('scoreValue', {where: {playerId}, include: [{model: Level, where:{name: "intermediate"}}] }) || 0;
+        const advancedScore = await Score.sum('scoreValue', {where: {playerId}, include: [{model: Level, where:{name: "advanced"}}] }) || 0;
 
         const totalScore = beginnerScore + intermediateScore + advancedScore;
 

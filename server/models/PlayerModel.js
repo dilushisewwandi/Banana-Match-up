@@ -1,6 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
-import { User } from "./UserModel.js";
+// import { User } from "./UserModel.js";
 
 export const Player = sequelize.define(
     "Player",
@@ -14,11 +14,6 @@ export const Player = sequelize.define(
         userId:{
             type: DataTypes.INTEGER,
             allowNull: false,
-            references:{
-                model:"users",
-                key:"userId",
-            },
-            onDelete: "CASCADE",
         },
 
         totalScore:{
@@ -37,9 +32,13 @@ export const Player = sequelize.define(
         },
     },
     {
-        tableName: "players",
-        timestamps: true,
+        tableName: "players"
     }
 );
 
 export default Player;
+
+
+
+
+
