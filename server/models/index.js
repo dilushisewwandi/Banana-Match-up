@@ -8,8 +8,8 @@ import { sequelize } from "../config/db.js";
 
 
 // User ↔ Player
-User.hasOne(Player, { foreignKey: "userId" });
-Player.belongsTo(User, { foreignKey: "userId" });
+User.hasOne(Player, { foreignKey: "userId"});
+Player.belongsTo(User, { foreignKey: "userId"});
 
 // Level ↔ Round
 Level.hasMany(Round, { foreignKey: "levelId", onDelete: "CASCADE" });

@@ -6,6 +6,8 @@ import userRoutes from "./routes/userRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
 import levelRoutes from "./routes/levelRoutes.js";
 import bananaRoutes from "./routes/bananaRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import playerRoutes from "./routes/playerRoutes.js";
 import { connectDB } from "./config/db.js";
 
 // Import models to initialize them and their associations(fixed by github copilot)
@@ -29,6 +31,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/levels", levelRoutes);
 app.use("/api/banana", bananaRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/players", playerRoutes);
 
 // Root route for testing
 app.get("/", (req, res) => {

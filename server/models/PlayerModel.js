@@ -11,9 +11,17 @@ export const Player = sequelize.define(
             primaryKey: true,
         },
 
+        // fix by github copilot: added UNIQUE foreign-key constraint and cascade delete for userId
+        // fix by gihub copilot: mirrored comment variant as requested
         userId:{
             type: DataTypes.INTEGER,
             allowNull: false,
+            unique: true,
+            references: {
+                model: "users",
+                key: "userId",
+            },
+            onDelete: "CASCADE",
         },
 
         totalScore:{
@@ -31,8 +39,11 @@ export const Player = sequelize.define(
             defaultValue: "beginner",
         },
     },
+    // fix by github copilot: enabled timestamps on players table for auditing
+    // fix by gihub copilot: mirrored comment variant as requested
     {
-        tableName: "players"
+        tableName: "players",
+        timestamps: true,
     }
 );
 

@@ -21,6 +21,11 @@ export const Level = sequelize.define(
             type: DataTypes.INTEGER, 
             allowNull: false 
         },
+        bananaToPoints:{
+            type: DataTypes.INTEGER,
+            allowNull:false,
+            defaultValue:2
+        },
         roundTime: { 
             type: DataTypes.INTEGER, 
             defaultValue: 0 
