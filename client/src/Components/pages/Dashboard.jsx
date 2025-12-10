@@ -11,6 +11,8 @@ const Dashboard = () => {
     advanced: 0,
     totalScore: 0,
   });
+  const [nextLevel, setNextLevel] = useState(null);
+  const [pointsToNext, setPointsToNext] = useState(0);
   const [currentLevel, setCurrentLevel] = useState("beginner");
 
   useEffect(() => {
@@ -29,6 +31,8 @@ const Dashboard = () => {
         const res = await axios.get(`http://localhost:5000/api/dashboard?playerId=${playerId}`);
         setScores(res.data);
         setCurrentLevel(res.data.currentLevel);
+        setNextLevel(res.data.nextLevel || null);
+        setPointsToNext(res.data.pointsToNext || 0);
 
       }catch(error){
         console.error("Error fetching dashboard data:", error);
@@ -37,6 +41,8 @@ const Dashboard = () => {
 
     fetchDashboardData();
   }, [navigate]);
+    
+  // fix by gihub copilot: added nextLevel and pointsToNext handling for progress bar
 
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-start text-yellow-900 font-playful bg-gradient-to-b from-yellow-50 via-yellow-100 to-yellow-200 overflow-hidden">
@@ -81,6 +87,23 @@ const Dashboard = () => {
           Your Progress
         </h2>
 
+        {/* Progress to next level */}
+        {nextLevel && (
+          <div className="mb-6">
+            <div className="flex justify-between text-sm text-yellow-800 mb-1">
+              <div>Current: {currentLevel}</div>
+              <div>Next: {nextLevel.name} ({nextLevel.scoreThreshold} pts)</div>
+            </div>
+            <div className="w-full bg-yellow-200 rounded-full h-4 overflow-hidden">
+              <div
+                className="bg-green-500 h-4"
+                style={{ width: `${Math.min(100, Math.round((scores.totalScore / nextLevel.scoreThreshold) * 100))}%` }}
+              />
+            </div>
+            <div className="text-xs text-yellow-800 mt-1">{pointsToNext} points to unlock {nextLevel.name}</div>
+          </div>
+        )}
+
         <div className="grid grid-cols-3 gap-4 text-center">
           <div className="bg-yellow-200 rounded-2xl py-4 shadow-lg">
             <h3 className="text-xl font-bold text-yellow-900">Beginner</h3>
@@ -120,7 +143,7 @@ const Dashboard = () => {
         </motion.button>
 
         <motion.button
-          onClick={() => currentLevel === "intermediate" && navigate("/intermediate")}
+          onClick={() => currentLevel !== "beginner" && navigate("/intermediate")}
           whileHover={{ scale: 1.1 }}
          className={`bg-yellow-300 text-yellow-900 font-bold px-8 py-4 rounded-2xl shadow-xl transition
             ${currentLevel === "beginner" ? "opacity-50 cursor-not-allowed" : "hover:bg-yellow-400"}`}

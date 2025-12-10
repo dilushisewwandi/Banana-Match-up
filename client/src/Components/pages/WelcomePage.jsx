@@ -15,7 +15,8 @@ const WelcomePage = () => {
       return;
     }
 
-     // Fetch logged-in user's info from backend
+    // Fetch logged-in user's info from backend
+    // fix by gihub copilot: ensure username is taken from `data.user.username` and applied to welcome
     fetch("http://localhost:5000/api/user", 
       {headers: {"Authorization": `Bearer ${token}`, // send JWT token in header for authentication
     },})

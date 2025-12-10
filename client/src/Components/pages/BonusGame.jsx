@@ -3,15 +3,16 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import axios from "axios";
 
-const SCORE_THRESHOLD = 90;
-const BANANA_TO_POINTS = 2; // 1 banana = 2 points
-
 const BonusGame = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const playerId = searchParams.get("playerId") || localStorage.getItem("playerId");
   const roundsScore = Number(searchParams.get("roundsScore") ?? 0);
+  const level = searchParams.get("level") || "intermediate";
+
+  const [scoreThreshold, setScoreThreshold] = useState(0);
+  const [bananaToPoints, setBananaToPoints] = useState(10);
 
   const [gameId, setGameId] = useState(null);
   const [imageData, setImageData] = useState("");
@@ -22,101 +23,184 @@ const BonusGame = () => {
   const [feedback, setFeedback] = useState("");
   const [savingFinal, setSavingFinal] = useState(false);
 
-  // derived
-  const bonusPoints = useMemo(() => totalBananas * BANANA_TO_POINTS, [totalBananas]);
-  const remainingPoints = Math.max(0, SCORE_THRESHOLD - roundsScore - bonusPoints);
+  // ✅ Correct logic: Every 5 bananas = bananaToPoints
+  const bonusPoints = useMemo(
+    () => Math.floor(totalBananas / 5) * bananaToPoints,
+    [totalBananas, bananaToPoints]
+  );
 
-  // Fetch puzzle
+  const remainingPoints = useMemo(() => {
+    return Math.max(0, scoreThreshold - roundsScore - bonusPoints);
+  }, [scoreThreshold, roundsScore, bonusPoints]);
+
+  // ✅ Load level config
+  useEffect(() => {
+    const fetchLevelConfig = async () => {
+      try {
+        const res = await axios.get(`http://localhost:5000/api/levels/config/${level}`);
+        setScoreThreshold(res.data.scoreThreshold);
+        setBananaToPoints(res.data.bananaToPoints);
+      } catch (err) {
+        console.error("Failed to load level config");
+      }
+    };
+
+    fetchLevelConfig();
+  }, [level]);
+
+
+
+useEffect(() => {
+  console.log("LEVEL CONFIG:", {
+    scoreThreshold,
+    bananaToPoints
+  });
+}, [scoreThreshold, bananaToPoints]);
+
+
+
+
+
+  // ✅ Load puzzle
+  useEffect(() => {
+    const fetchPuzzle = async () => {
+      setLoading(true);
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/api/banana/new?playerId=${playerId}`
+        );
+        setGameId(res.data.gameId);
+        setImageData(res.data.imageData);
+      } catch (err) {
+        setFeedback("Failed to load puzzle.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (playerId) fetchPuzzle();
+  }, [playerId]);
+
   const fetchPuzzle = async () => {
     setLoading(true);
     setFeedback("");
     try {
-      const res = await axios.get(`http://localhost:5000/api/banana/new?playerId=${playerId}`);
+      const res = await axios.get(
+        `http://localhost:5000/api/banana/new?playerId=${playerId}`
+      );
       setGameId(res.data.gameId);
       setImageData(res.data.imageData);
     } catch (err) {
-      console.error("Failed to fetch puzzle:", err);
-      setFeedback("Failed to load puzzle. Try again.");
+      setFeedback("Failed to load puzzle.");
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchPuzzle();
-    setTotalBananas(0);
-    setLastRoundBananas(0);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playerId]);
-
   const submitAnswer = async () => {
     if (!answer) {
-      setFeedback("Please enter an answer.");
+      setFeedback("Enter an answer.");
       return;
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/banana/submit", { gameId, answer });
+      const res = await axios.post("http://localhost:5000/api/banana/submit", {
+        gameId,
+        answer,
+      });
 
       const earned = Number(res.data.bananasEarned || 0);
-      setLastRoundBananas(earned);
-      if (earned > 0) setTotalBananas(prev => prev + earned);
+      const newTotalBananas = totalBananas + earned;
 
-      setFeedback(res.data.correct ? `Correct! +${earned} banana(s)` : "Wrong! No bananas this round.");
+      setLastRoundBananas(earned);
+      setTotalBananas(newTotalBananas);
+
+      setFeedback(res.data.correct ? `✅ +${earned} 🍌` : "❌ Wrong!");
+
+      const newBonusPoints =
+        Math.floor(newTotalBananas / 5) * bananaToPoints;
+
+      const newRemaining = Math.max(
+        0,
+        scoreThreshold - roundsScore - newBonusPoints
+      );
 
       setAnswer("");
-
-      const newTotalBananas = totalBananas + earned;
-      const newRemaining = Math.max(0, SCORE_THRESHOLD - roundsScore - newTotalBananas * BANANA_TO_POINTS);
 
       if (newRemaining <= 0) {
         await finalizeAndComplete(newTotalBananas);
       } else {
-        setTimeout(() => fetchPuzzle(), 700);
+        setTimeout(fetchPuzzle, 500);
       }
-    } catch (err) {
-      console.error("Submit failed:", err);
-      setFeedback(err.response?.data?.message || "Submission failed. Try a new puzzle.");
-      setTimeout(() => fetchPuzzle(), 700);
+    } catch {
+      setFeedback("Submission failed.");
+      setTimeout(fetchPuzzle, 500);
     }
   };
 
-  const finalizeAndComplete = async (finalTotalBananas) => {
+  const finalizeAndComplete = async (finalBananas) => {
     setSavingFinal(true);
+
+    const api =
+      level === "advanced"
+        ? "http://localhost:5000/api/levels/save/advanced"
+        : "http://localhost:5000/api/levels/save/intermediate";
+
     try {
       const token = localStorage.getItem("token");
+
       const res = await axios.post(
-        "http://localhost:5000/api/levels/save/intermediate",
+        api,
         {
           playerId,
           roundsScore,
-          bonusScore: finalTotalBananas,
+          bonusScore: finalBananas,
         },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
 
-      const intermediateTotal = res.data.intermediateTotal ?? (roundsScore + finalTotalBananas * BANANA_TO_POINTS);
+      const calculatedBonus =
+        Math.floor(finalBananas / 5) * bananaToPoints;
 
-      navigate("/level-complete", {
-        state: {
-          score: roundsScore,
-          bonusBananas: finalTotalBananas,
-          bonusPoints: finalTotalBananas * BANANA_TO_POINTS,
-          intermediateTotal,
-          unlocked: intermediateTotal >= SCORE_THRESHOLD,
-          playerId,
-          level: "intermediate",
-        },
-      });
+      const total =
+        res.data?.advancedTotal ??
+        res.data?.intermediateTotal ??
+        (roundsScore + calculatedBonus);
+
+      if (level === "advanced") {
+        navigate("/win", {
+          state: {
+            score: roundsScore,
+            bonusBananas: finalBananas,
+            bonusPoints: calculatedBonus,
+            total,
+            level: "advanced",
+          },
+        });
+      } else {
+        navigate("/level-complete", {
+          state: {
+            score: roundsScore,
+            bonusBananas: finalBananas,
+            bonusPoints: calculatedBonus,
+            intermediateTotal: total,
+            unlocked: total >= scoreThreshold,
+            level: "intermediate",
+          },
+        });
+      }
     } catch (err) {
-      console.error("Failed to save final score:", err);
-      setFeedback("Failed to save final result. Please try again.");
+      setFeedback("Failed to save score.");
       setSavingFinal(false);
     }
   };
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center text-2xl font-bold text-gray-700">Loading puzzle...</div>;
+    return (
+      <div className="min-h-screen flex items-center justify-center text-xl font-bold">
+        Loading...
+      </div>
+    );
   }
 
   return (
@@ -140,7 +224,7 @@ const BonusGame = () => {
         </motion.div>
       ))}
 
-      {/* Main game card */}
+      {/* Main Card */}
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -156,7 +240,11 @@ const BonusGame = () => {
         </motion.h1>
 
         {imageData && (
-          <img src={imageData} alt="Banana puzzle" className="w-full rounded-lg border-4 border-yellow-400 mb-4 shadow-lg" />
+          <img
+            src={imageData}
+            alt="Banana puzzle"
+            className="w-full rounded-lg border-4 border-yellow-400 mb-4 shadow-lg"
+          />
         )}
 
         <input
@@ -168,27 +256,59 @@ const BonusGame = () => {
         />
 
         <div className="flex gap-3 mb-4 justify-center">
-          <button onClick={submitAnswer} disabled={savingFinal} className="px-4 py-2 bg-yellow-400 rounded shadow hover:bg-yellow-500 font-bold">
+          <button
+            onClick={submitAnswer}
+            disabled={savingFinal}
+            className="px-4 py-2 bg-yellow-400 rounded shadow hover:bg-yellow-500 font-bold"
+          >
             Submit
           </button>
-          <button onClick={fetchPuzzle} className="px-4 py-2 bg-gray-200 rounded shadow hover:bg-gray-300 font-bold">
+
+          <button
+            onClick={fetchPuzzle}
+            className="px-4 py-2 bg-gray-200 rounded shadow hover:bg-gray-300 font-bold"
+          >
             Skip
           </button>
         </div>
 
-        {feedback && <motion.div className="mb-3 text-lg font-bold text-green-700" animate={{ scale: [1, 1.05, 1] }}>{feedback}</motion.div>}
+        {feedback && (
+          <motion.div
+            className="mb-3 text-lg font-bold text-green-700"
+            animate={{ scale: [1, 1.05, 1] }}
+          >
+            {feedback}
+          </motion.div>
+        )}
 
         <div className="mt-4 text-center space-y-1 text-lg font-bold">
-          <div>Last round bananas: <span className="text-yellow-500">{lastRoundBananas}</span></div>
-          <div>Total bananas: <span className="text-yellow-500">{totalBananas}</span></div>
-          <div>Bonus points: <span className="text-yellow-500">{bonusPoints}</span></div>
-          <div className="mt-2">Remaining to unlock: <strong>{remainingPoints}</strong> points</div>
+          <div>
+            Last round bananas:{" "}
+            <span className="text-yellow-500">{lastRoundBananas}</span>
+          </div>
+          <div>
+            Total bananas:{" "}
+            <span className="text-yellow-500">{totalBananas}</span>
+          </div>
+          <div>
+            Bonus points:{" "}
+            <span className="text-yellow-500">{bonusPoints}</span>
+          </div>
+
+          <div className="mt-2">
+            Remaining to unlock: <strong>{remainingPoints}</strong> points
+          </div>
         </div>
 
-        {savingFinal && <div className="mt-3 text-lg font-bold text-blue-600">Saving final score...</div>}
+        {savingFinal && (
+          <div className="mt-3 text-lg font-bold text-blue-600">
+            Saving final score...
+          </div>
+        )}
       </motion.div>
     </div>
   );
+
 };
 
 export default BonusGame;

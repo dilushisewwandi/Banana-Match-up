@@ -35,12 +35,23 @@ const BeginnerLevel = () => {
     //get logged-in playerId assuming localStorage after the user login
     let playerId = parseInt(localStorage.getItem("playerId"),10);
     if (!playerId) throw new Error("Player ID not found");
+    // fix by gihub copilot: include Authorization header (Bearer token) for protected save route
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No auth token found — redirecting to login");
+      navigate("/login");
+      return;
+    }
 
-    await axios.post("http://localhost:5000/api/levels/save/beginner", {
-      playerId,
-      levelId: 1,
-      scoreValue: score,
-    });
+    await axios.post(
+      "http://localhost:5000/api/levels/save/beginner",
+      {
+        playerId,
+        levelId: 1,
+        scoreValue: score,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
     console.log("Beginner score saved!");
   } catch (error) {
     console.error("Error saving beginner score:", error);
@@ -50,7 +61,7 @@ const BeginnerLevel = () => {
 
   //Handle selecting an option
   const handleSelect = (option) => {
-    if (selected) return;//prevent multiple selects
+    if (selected === option) return;//prevent re clicking the same option
     setSelected(option);
 
     const correct = rounds[currentRound].answer;
@@ -94,27 +105,17 @@ const BeginnerLevel = () => {
         className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
         style={{
           backgroundImage: "url('/Assets/images/Loading.jpg')",
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           backgroundBlendMode: "overlay",
         }}
       >
         <motion.h1 className="text-5xl font-bold mb-4" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-          🎉 Level Complete!
+          🎉 Beginner Level Complete! 🎉
         </motion.h1>
         <motion.p className="text-2xl mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           Your Score: {score} 🍌
         </motion.p>
-        {/* <button
-          onClick={async () => {
-            await saveScore();
-            navigate("/intermediate");
-          }
-          }
-           
-          className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
-        >
-          Next Level ➜
-        </button> */}
+
         <button
           onClick={async () => {
             await saveScore();
@@ -144,7 +145,7 @@ const BeginnerLevel = () => {
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
       style={{
         backgroundImage: "url('/Assets/images/Loading.jpg')",
-        backgroundColor: "rgba(0,0,0,0.6)",
+        backgroundColor: "rgba(0,0,0,0.5)",
         backgroundBlendMode: "overlay",
       }}
     >
@@ -164,10 +165,6 @@ const BeginnerLevel = () => {
         </div>
       </motion.div>
 
-      {/* Top bar */}
-      <div className="w-full flex justify-end items-center px-8 mb-12">
-        <div className="text-2xl font-semibold">👤 Player</div>
-      </div>
 
       {/* Round & clue */}
       <div className="text-center mb-8 px-4">
@@ -185,7 +182,7 @@ const BeginnerLevel = () => {
             whileHover={{ scale: 1.1, rotate: 2 }}
             whileTap={{ scale: 0.95, rotate: -2 }}
             className={`
-              w-44 h-44 bg-yellow-400 flex items-center justify-center rounded-3xl text-xl font-bold cursor-pointer border-4 border-yellow-500 shadow-2xl transition-all
+              w-44 h-44 bg-yellow-400 flex items-center justify-center rounded-3xl text-xl font-bold cursor-pointer border-4 border-white shadow-2xl transition-all
               ${selected === option && option === rounds[currentRound].answer ? "bg-green-400 border-green-600 shadow-green-400/60" : ""}
               ${selected === option && option !== rounds[currentRound].answer ? "bg-red-400 border-red-600 shadow-red-400/60" : ""}
             `}

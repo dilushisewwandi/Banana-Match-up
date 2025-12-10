@@ -11,6 +11,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import BonusGame from './Components/pages/BonusGame';
 import LevelComplete from './Components/pages/LevelComplete';
+import Leaderboard from './Components/pages/LeaderBoard';
 
 export default function App() {
   return (
@@ -27,6 +28,7 @@ export default function App() {
           <Route path='/level-complete' element={<LevelComplete/>}/>
           <Route path='/advanced' element={<AdvancedLevel/>}/>
           <Route path='/dashboard' element={<Dashboard/>}/>
+          <Route path='/leaderboard' element={<Leaderboard/>}/>
         </Routes>
 
         <ToastContainer position="top-center" />
