@@ -7,23 +7,23 @@ import BananaGame from "./BananaModel.js";
 import { sequelize } from "../config/db.js";
 
 
-// User ↔ Player
+// User-Player association
 User.hasOne(Player, { foreignKey: "userId"});
 Player.belongsTo(User, { foreignKey: "userId"});
 
-// Level ↔ Round
+// Level-Round association
 Level.hasMany(Round, { foreignKey: "levelId", onDelete: "CASCADE" });
 Round.belongsTo(Level, { foreignKey: "levelId" });
 
-// Player ↔ Score
+// Player-Score association
 Player.hasMany(Score, { foreignKey: "playerId", onDelete: "CASCADE" });
 Score.belongsTo(Player, { foreignKey: "playerId" });
 
-// Level ↔ Score
+// Level-Score association
 Level.hasMany(Score, { foreignKey: "levelId" });
 Score.belongsTo(Level, { foreignKey: "levelId" });
 
-// Player ↔ BananaGame
+// Player-BananaGame association
 Player.hasMany(BananaGame, { foreignKey: "playerId", onDelete: "CASCADE" });
 BananaGame.belongsTo(Player, { foreignKey: "playerId" });
 

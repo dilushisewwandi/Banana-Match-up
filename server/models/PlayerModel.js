@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/db.js";
-// import { User } from "./UserModel.js";
 
 export const Player = sequelize.define(
     "Player",
@@ -12,7 +11,6 @@ export const Player = sequelize.define(
         },
 
         // fix by github copilot: added UNIQUE foreign-key constraint and cascade delete for userId
-        // fix by gihub copilot: mirrored comment variant as requested
         userId:{
             type: DataTypes.INTEGER,
             allowNull: false,
@@ -40,7 +38,6 @@ export const Player = sequelize.define(
         },
     },
     // fix by github copilot: enabled timestamps on players table for auditing
-    // fix by gihub copilot: mirrored comment variant as requested
     {
         tableName: "players",
         timestamps: true,
