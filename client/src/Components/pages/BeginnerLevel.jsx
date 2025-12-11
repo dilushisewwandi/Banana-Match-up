@@ -15,11 +15,23 @@ const BeginnerLevel = () => {
   const [rounds, setRounds] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  //redirect login when not token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if(!token){
+      navigate("/auth");
+    }
+  }, []);
+
+  //round fetching
   useEffect(() => {
     const fetchRounds = async () =>{
       try{
         const levelId = 1;
-        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${levelId}`);
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${levelId}`,
+          {headers:token ? {Authorization:`Bearer ${token}`} : {}}
+        );
         setRounds(res.data.rounds);
         setLoading(false);
       }catch(err){
@@ -32,7 +44,7 @@ const BeginnerLevel = () => {
   //Function to save score to backend
   const saveScore = async () => {
   try {
-    //get logged-in playerId assuming localStorage after the user login
+    //fix by gihub copilot: get logged-in playerId assuming localStorage after the user login
     let playerId = parseInt(localStorage.getItem("playerId"),10);
     if (!playerId) throw new Error("Player ID not found");
     // fix by gihub copilot: include Authorization header (Bearer token) for protected save route
@@ -46,8 +58,6 @@ const BeginnerLevel = () => {
     await axios.post(
       "http://localhost:5000/api/levels/save/beginner",
       {
-        playerId,
-        levelId: 1,
         scoreValue: score,
       },
       { headers: { Authorization: `Bearer ${token}` } }
@@ -59,7 +69,7 @@ const BeginnerLevel = () => {
 };
 
 
-  //Handle selecting an option
+  //handle select answer
   const handleSelect = (option) => {
     if (selected === option) return;//prevent re clicking the same option
     setSelected(option);
@@ -77,7 +87,7 @@ const BeginnerLevel = () => {
     }
   };
 
-  //Move to next round or finish the level
+  //move to next round / finish the level
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
@@ -89,7 +99,7 @@ const BeginnerLevel = () => {
     }
   };
 
-  //show loading screen
+  //loading screen
   if(loading){
     return(
       <div className="min-h-screen flex items-center justify-center text-white text-4xl">
@@ -124,8 +134,8 @@ const BeginnerLevel = () => {
                 score,
                 bonusBananas: 0,
                 bonusPoints: 0,
-                intermediateTotal: score,  // for beginner, total = score
-                unlocked: true,            // beginner always unlocks intermediate
+                intermediateTotal: score,  
+                unlocked: true,            
                 level: "beginner"
               }
             });
@@ -139,7 +149,7 @@ const BeginnerLevel = () => {
     );
   }
 
-  //Game UI
+  //beginner level UI
   return (
     <div
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
@@ -149,7 +159,7 @@ const BeginnerLevel = () => {
         backgroundBlendMode: "overlay",
       }}
     >
-      {/* Monkey Score Popup */}
+      
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -165,8 +175,6 @@ const BeginnerLevel = () => {
         </div>
       </motion.div>
 
-
-      {/* Round & clue */}
       <div className="text-center mb-8 px-4">
         <p className="text-xl font-bold text-yellow-200 tracking-wide animate-pulse">Round {currentRound + 1}/5</p>
         <h2 className="text-2xl font-extrabold mt-2 text-yellow-300 drop-shadow-lg" style={{ fontFamily: "'Comic Neue', cursive" }}>
@@ -174,7 +182,6 @@ const BeginnerLevel = () => {
         </h2>
       </div>
 
-      {/* Answer Cards */}
       <div className="grid grid-cols-4 gap-8 mb-12 mt-10 justify-items-center">
         {rounds[currentRound].options.map((option, index) => (
           <motion.div
@@ -193,7 +200,6 @@ const BeginnerLevel = () => {
         ))}
       </div>
 
-      {/* Feedback */}
       {feedback && (
         <motion.div
           className="text-2xl font-bold mb-8 bg-white/30 backdrop-blur-sm px-8 py-4 rounded-3xl text-center drop-shadow-xl"
@@ -206,7 +212,6 @@ const BeginnerLevel = () => {
         </motion.div>
       )}
 
-      {/* Levels button */}
       <button
         onClick={() => navigate("/dashboard")}
         className="mb-8 bg-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition"

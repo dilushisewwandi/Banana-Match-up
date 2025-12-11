@@ -7,13 +7,11 @@ const BonusGame = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const playerId = searchParams.get("playerId") || localStorage.getItem("playerId");
   const roundsScore = Number(searchParams.get("roundsScore") ?? 0);
   const level = searchParams.get("level") || "intermediate";
 
   const [scoreThreshold, setScoreThreshold] = useState(0);
   const [bananaToPoints, setBananaToPoints] = useState(10);
-
   const [gameId, setGameId] = useState(null);
   const [imageData, setImageData] = useState("");
   const [answer, setAnswer] = useState("");
@@ -23,17 +21,21 @@ const BonusGame = () => {
   const [feedback, setFeedback] = useState("");
   const [savingFinal, setSavingFinal] = useState(false);
 
-  // ✅ Correct logic: Every 5 bananas = bananaToPoints
-  const bonusPoints = useMemo(
-    () => Math.floor(totalBananas / 5) * bananaToPoints,
+  const token = localStorage.getItem("token");
+
+  //bananas to bonus point
+  const bonusPoints = useMemo(() => 
+    Math.floor(totalBananas / 5) * bananaToPoints,
+
     [totalBananas, bananaToPoints]
   );
 
+  //points to unlock next level
   const remainingPoints = useMemo(() => {
     return Math.max(0, scoreThreshold - roundsScore - bonusPoints);
   }, [scoreThreshold, roundsScore, bonusPoints]);
 
-  // ✅ Load level config
+  //level config load
   useEffect(() => {
     const fetchLevelConfig = async () => {
       try {
@@ -50,24 +52,22 @@ const BonusGame = () => {
 
 
 
-useEffect(() => {
-  console.log("LEVEL CONFIG:", {
-    scoreThreshold,
-    bananaToPoints
-  });
-}, [scoreThreshold, bananaToPoints]);
+// useEffect(() => {
+//   console.log("LEVEL CONFIG:", {
+//     scoreThreshold,
+//     bananaToPoints
+//   });
+// }, [scoreThreshold, bananaToPoints]);
 
 
-
-
-
-  // ✅ Load puzzle
+  //load banana puzzle
   useEffect(() => {
     const fetchPuzzle = async () => {
       setLoading(true);
       try {
         const res = await axios.get(
-          `http://localhost:5000/api/banana/new?playerId=${playerId}`
+          `http://localhost:5000/api/banana/new`,
+          {headers:{Authorization:`Bearer ${token}`}}
         );
         setGameId(res.data.gameId);
         setImageData(res.data.imageData);
@@ -78,15 +78,19 @@ useEffect(() => {
       }
     };
 
-    if (playerId) fetchPuzzle();
-  }, [playerId]);
+    fetchPuzzle();
+  }, []);
 
+
+//new puzzle load when skip
   const fetchPuzzle = async () => {
     setLoading(true);
     setFeedback("");
+
     try {
       const res = await axios.get(
-        `http://localhost:5000/api/banana/new?playerId=${playerId}`
+        `http://localhost:5000/api/banana/new`,
+        {headers:{Authorization: `Bearer ${token}`}}
       );
       setGameId(res.data.gameId);
       setImageData(res.data.imageData);
@@ -97,6 +101,8 @@ useEffect(() => {
     }
   };
 
+
+  //submit banana puzzle answer 
   const submitAnswer = async () => {
     if (!answer) {
       setFeedback("Enter an answer.");
@@ -104,10 +110,11 @@ useEffect(() => {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/banana/submit", {
-        gameId,
-        answer,
-      });
+      const res = await axios.post("http://localhost:5000/api/banana/submit", 
+        {gameId,answer}, 
+
+        {headers: {Authorization: `Bearer ${token}`}}
+      );
 
       const earned = Number(res.data.bananasEarned || 0);
       const newTotalBananas = totalBananas + earned;
@@ -117,6 +124,8 @@ useEffect(() => {
 
       setFeedback(res.data.correct ? `✅ +${earned} 🍌` : "❌ Wrong!");
 
+      //fix by github copilot
+      //check if player unlocked next level
       const newBonusPoints =
         Math.floor(newTotalBananas / 5) * bananaToPoints;
 
@@ -138,6 +147,8 @@ useEffect(() => {
     }
   };
 
+
+  //save bonus score
   const finalizeAndComplete = async (finalBananas) => {
     setSavingFinal(true);
 
@@ -152,15 +163,13 @@ useEffect(() => {
       const res = await axios.post(
         api,
         {
-          playerId,
           roundsScore,
           bonusScore: finalBananas,
         },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
 
-      const calculatedBonus =
-        Math.floor(finalBananas / 5) * bananaToPoints;
+      const calculatedBonus = Math.floor(finalBananas / 5) * bananaToPoints;
 
       const total =
         res.data?.advancedTotal ??
@@ -203,6 +212,7 @@ useEffect(() => {
     );
   }
 
+  //bonus game UI
   return (
     <div className="relative min-h-screen bg-gradient-to-br from-yellow-100 via-yellow-200 to-yellow-300 overflow-hidden flex flex-col items-center justify-center text-gray-800">
 

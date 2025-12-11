@@ -7,6 +7,7 @@ const IntermediateLevel = () => {
   const navigate = useNavigate();
   const {levelId} = useParams();
 
+  //state management
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -16,15 +17,27 @@ const IntermediateLevel = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [rounds, setRounds] = useState([]);
   const [scoreThreshold, setScoreThreshold] = useState(0);
-  //const [levelName, setLevelName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Fetch level info and rounds from backend (use levelId from params)
+  //redirect login when no token
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if(!token){
+        navigate("/auth");
+      }
+    }, []);
+
+  //fetch levels
   useEffect(() => {
     const fetchLevelData = async () => {
       try {
-        const effectiveLevelId = Number(levelId) || 2; // fallback to level 2 when param missing
-        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${effectiveLevelId}`);
+        const effectiveLevelId = Number(levelId) || 2; // fallback to level 2 when param missing(fix by github copilot)
+
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${effectiveLevelId}`,
+          {headers: token ? {Authorization: `Bearer ${token}`} : {}}
+        );
+
         setRounds(res.data.rounds || []);
         setScoreThreshold(res.data.level?.scoreThreshold ?? 0);
       } catch (err) {
@@ -35,15 +48,15 @@ const IntermediateLevel = () => {
     };
     fetchLevelData();
   }, [levelId]);
-  // fix by gihub copilot: added level query param when navigating to bonus game
+  
 
-  // Timer logic
+  //timer 
   useEffect(() => {
     if (levelComplete || loading) return;
     if (timer === 0) {
       setFeedback("Time's up! ⏰");
       setTimeout(() => {
-        // if final round, complete with current score (no extra points on timeout)
+        // fix by github copilot: if final round, complete with current score (no extra points on timeout)
         if (currentRound >= rounds.length - 1) {
           handleIntermediateComplete(score);
         } else {
@@ -56,6 +69,8 @@ const IntermediateLevel = () => {
     return () => clearInterval(countdown);
   }, [timer, levelComplete, loading, currentRound, rounds.length, score]);
 
+
+  //handle select answer
   const handleSelect = (option) => {
     if (selected) return;
     setSelected(option);
@@ -63,6 +78,7 @@ const IntermediateLevel = () => {
     const isCorrect = option === rounds[currentRound]?.answer;
     const newScore = isCorrect ? score + 15 : score;
 
+    //below part fix by github copilot
     // apply local score immediately and show feedback
     setScore(newScore);
     setFeedback(isCorrect ? "Correct! +15 🍌" : "Wrong! ❌ No points for this round");
@@ -78,6 +94,7 @@ const IntermediateLevel = () => {
     }, 1000);
   };
 
+  //move to next round
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
@@ -87,6 +104,7 @@ const IntermediateLevel = () => {
     }
   };
 
+  //save intermediate level score and unlock advanced level
   const handleIntermediateComplete = async (finalRunScore) => {
     const playerId = localStorage.getItem("playerId");
     if (!playerId) return;
@@ -98,13 +116,14 @@ const IntermediateLevel = () => {
 
       const res = await axios.post(
         "http://localhost:5000/api/levels/save/intermediate",
-        { playerId, levelId: Number(levelId) || 2, roundsScore: roundsScoreToSend, bonusScore: 0 },
+        {roundsScore: roundsScoreToSend, bonusScore: 0 },
         { headers: token ? { Authorization: `Bearer ${token}` } : {} }
       );
 
-      // prefer server-provided total as source-of-truth
+      // fix by github copilot: prefer server-provided total as source-of-truth
       const intermediateTotal = res.data?.intermediateTotal ?? res.data?.playerTotal ?? roundsScoreToSend;
 
+      //unlock advanced level
       if (intermediateTotal >= scoreThreshold) {
         setLevelComplete(true);
         navigate("/level-complete", {
@@ -118,6 +137,7 @@ const IntermediateLevel = () => {
           }
         });
       } else {
+        //go to banana game
         const remaining = Math.max(0, scoreThreshold - intermediateTotal);
         navigate(`/bonus?playerId=${playerId}&remaining=${remaining}&roundsScore=${roundsScoreToSend}&level=intermediate`);
       }
@@ -143,6 +163,8 @@ const IntermediateLevel = () => {
     );
   }
 
+
+//intermediate level UI
   return (
     <div className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10" style={{ backgroundImage: "url('/Assets/images/Loading.jpg')", backgroundColor: "rgba(0,0,0,0.6)", backgroundBlendMode: "overlay" }}>
       {/* Score & Timer */}

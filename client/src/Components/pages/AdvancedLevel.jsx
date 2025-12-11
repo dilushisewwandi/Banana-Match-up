@@ -7,6 +7,7 @@ const AdvancedLevel = () => {
   const navigate = useNavigate();
   const {levelId} = useParams();
 
+  //state manage
   const [currentRound, setCurrentRound] = useState(0);
   const [score, setScore] = useState(0);
   const [selected, setSelected] = useState(null);
@@ -19,12 +20,23 @@ const AdvancedLevel = () => {
   const [scoreThreshold, setScoreThreshold] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Fetch rounds
+  //redirect login when no token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if(!token){
+      navigate("/auth");
+    }
+  }, []);
+
+  //fetch rounds
   useEffect(() => {
     const fetchLevelData = async () => {
       try {
-        const effectiveLevelId = Number(levelId) || 3; // fallback to level 3 when param missing
-        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${effectiveLevelId}`);
+        const token = localStorage.getItem("token");
+        const effectiveLevelId = Number(levelId) || 3; //fix by github copilot
+        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${effectiveLevelId}`, //fix by github copilot
+          {headers: {Authorization: `Bearer ${token}`}}
+        );
         setRounds(res.data.rounds || []);
         setScoreThreshold(res.data.level?.scoreThreshold ?? 0);
       } catch (err) {
@@ -36,7 +48,7 @@ const AdvancedLevel = () => {
     fetchLevelData();
   }, [levelId]);
 
-  // Timer
+  //timer handle for rounds
   useEffect(() => {
     if (gameComplete || loading) return;
 
@@ -56,19 +68,19 @@ const AdvancedLevel = () => {
     return () => clearInterval(countdown);
   }, [timer, gameComplete, loading, currentRound, rounds.length]);
 
-  // Select answer
+  //handle select answer
   const handleSelect = (option) => {
-    if (selected) return;
+    if (selected) return;  //double click prevent
     setSelected(option);
 
     const isCorrect = option === rounds[currentRound]?.answer;
     const newScore = isCorrect ? score + 20 : score;
 
-    // mark correctness and update score/feedback
     if (!isCorrect) setAllCorrect(false);
     setScore(newScore);
     setFeedback(isCorrect ? "✅ Correct! +20 🍌" : "Wrong! ❌ No points for this round");
 
+    //fix by github copilot
     setTimeout(() => {
       if (currentRound >= rounds.length - 1) {
         // final round: if all answered correctly, finalize and save; otherwise go to bonus
@@ -86,6 +98,7 @@ const AdvancedLevel = () => {
     }, 900);
   };
 
+  //move to next round
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
@@ -96,6 +109,7 @@ const AdvancedLevel = () => {
     }
   };
 
+  //save advanced level score 
   const handleAdvancedComplete = async (finalRunScore) => {
     const playerId = localStorage.getItem("playerId");
     if (!playerId) return;
@@ -107,14 +121,24 @@ const AdvancedLevel = () => {
 
       const roundsScoreToSend = typeof finalRunScore === 'number' ? finalRunScore : score;
 
+      if (!token){
+        navigate("/login");
+        return;
+      }
+      //send level score to the backend
       const res = await axios.post(
         "http://localhost:5000/api/levels/save/advanced",
-        { playerId, levelId, roundsScore: roundsScoreToSend, bonusScore: 0 },
-        { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+        { levelId, roundsScore: roundsScoreToSend, bonusScore: 0 },
+        { headers: { Authorization: `Bearer ${token}` }}
       );
 
+      //fix by github copilot
       // use server response as source-of-truth; fallback to roundsScoreToSend
-      const advancedTotal = res.data?.playerTotal ?? res.data?.advancedTotal ?? res.data?.total ?? roundsScoreToSend;
+      const advancedTotal = res.data?.playerTotal ?? 
+                            res.data?.advancedTotal ?? 
+                            res.data?.total ?? 
+                            roundsScoreToSend;
+
 
       if (advancedTotal >= scoreThreshold) {
         setGameComplete(true);
@@ -146,9 +170,6 @@ const AdvancedLevel = () => {
     return <div className="p-8 text-white text-2xl">Loading level...</div>;
   }
 
-  // if (!rounds.length) {
-  //   return <div className="p-8 text-white">No rounds available</div>;
-  // }
   if(gameComplete){
     return(
       <div className="p-8">
@@ -157,6 +178,7 @@ const AdvancedLevel = () => {
     );
   }
 
+  //advanced level UI
   return (
     <div
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
@@ -166,7 +188,6 @@ const AdvancedLevel = () => {
         backgroundBlendMode: "overlay",
       }}
     >
-      {/* Score */}
       <motion.div className="absolute left-6 top-1/3 bg-yellow-200/90 px-6 py-4 rounded-3xl border-4 border-yellow-400 flex flex-col items-center">
         <div className="text-6xl">🐵</div>
         <div className="text-2xl text-yellow-800 font-bold" style={{ fontFamily: "'Comic Neue', cursive" }}>Score</div>
@@ -174,7 +195,6 @@ const AdvancedLevel = () => {
         <div className="mt-2 text-xl text-red-600 animate-ping">⏱ {timer}s</div>
       </motion.div>
 
-      {/* Clue */}
       <div className="text-center mt-20">
         <p className="text-xl font-bold text-yellow-200 tracking-wide animate-pulse">
           Round {currentRound + 1}/{rounds.length}
@@ -184,7 +204,6 @@ const AdvancedLevel = () => {
         </h2>
       </div>
 
-      {/* Options */}
       <div className="grid grid-cols-4 gap-6 mt-10">
         {rounds[currentRound]?.options?.map((option, index) => (
           <motion.div
