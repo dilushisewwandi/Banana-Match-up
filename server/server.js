@@ -1,0 +1,52 @@
+import express from "express";
+import dotenv from "dotenv";
+import cors from "cors";
+import authRoutes from "./routes/authRoutes.js";
+import userRoutes from "./routes/userRoutes.js";
+import dashboardRoutes from "./routes/dashboardRoutes.js";
+import levelRoutes from "./routes/levelRoutes.js";
+import bananaRoutes from "./routes/bananaRoutes.js";
+import leaderboardRoutes from "./routes/leaderboardRoutes.js";
+import playerRoutes from "./routes/playerRoutes.js";
+import { connectDB } from "./config/db.js";
+
+// Import models to initialize them and their associations(fixed by github copilot)
+import { User } from "./models/UserModel.js";
+import { Player } from "./models/PlayerModel.js";
+import { Score } from "./models/ScoreModel.js";
+
+dotenv.config();
+const app = express();
+
+// Connect to database
+connectDB();
+
+// Middleware
+app.use(cors());
+app.use(express.json());
+
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/user", userRoutes);
+app.use("/api/dashboard", dashboardRoutes);
+app.use("/api/levels", levelRoutes);
+app.use("/api/banana", bananaRoutes);
+app.use("/api/leaderboard", leaderboardRoutes);
+app.use("/api/players", playerRoutes);
+
+// Root route for testing
+app.get("/", (req, res) => {
+  res.send("Backend server is running!");
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: "Something went wrong!" });
+});
+
+// Start server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+

@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import axios from "axios"; 
 
 const BeginnerLevel = () => {
   const navigate = useNavigate();
@@ -11,25 +12,74 @@ const BeginnerLevel = () => {
   const [selected, setSelected] = useState(null);
   const [feedback, setFeedback] = useState("");
   const [levelComplete, setLevelComplete] = useState(false);
+  const [rounds, setRounds] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  //Game rounds
-  const rounds = [
-    { clue: "A yellow fruit monkeys love", options: ["Apple", "Banana", "Mango", "Orange"], answer: "Banana" },
-    { clue: "A red fruit often used in juice", options: ["Apple", "Kiwi", "Pear", "Papaya"], answer: "Apple" },
-    { clue: "A fruit that's orange in color", options: ["Banana", "Orange", "Guava", "Lemon"], answer: "Orange" },
-    { clue: "A tropical fruit with rough skin", options: ["Pineapple", "Mango", "Melon", "Papaya"], answer: "Pineapple" },
-    { clue: "A small red fruit often used in jam", options: ["Grape", "Strawberry", "Peach", "Plum"], answer: "Strawberry" },
-  ];
+  //redirect login when not token
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if(!token){
+      navigate("/auth");
+    }
+  }, []);
+
+  //round fetching
+  useEffect(() => {
+    const fetchRounds = async () =>{
+      try{
+        const levelId = 1;
+        const token = localStorage.getItem("token");
+        const res = await axios.get(`http://localhost:5000/api/levels/rounds/${levelId}`,
+          {headers:token ? {Authorization:`Bearer ${token}`} : {}}
+        );
+        setRounds(res.data.rounds);
+        setLoading(false);
+      }catch(err){
+        console.error("Error fetching rounds:", err);
+      }
+    };
+    fetchRounds();
+  }, []);
+
+  //Function to save score to backend
+  const saveScore = async () => {
+  try {
+    //fix by gihub copilot: get logged-in playerId assuming localStorage after the user login
+    let playerId = parseInt(localStorage.getItem("playerId"),10);
+    if (!playerId) throw new Error("Player ID not found");
+    // fix by gihub copilot: include Authorization header (Bearer token) for protected save route
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.warn("No auth token found — redirecting to login");
+      navigate("/login");
+      return;
+    }
+
+    await axios.post(
+      "http://localhost:5000/api/levels/save/beginner",
+      {
+        scoreValue: score,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    console.log("Beginner score saved!");
+  } catch (error) {
+    console.error("Error saving beginner score:", error);
+  }
+};
 
 
-  //Handle selecting an option
+  //handle select answer
   const handleSelect = (option) => {
-    if (selected) return;//prevent multiple selects
+    if (selected === option) return;//prevent re clicking the same option
     setSelected(option);
 
-    if (option === rounds[currentRound].answer) {
+    const correct = rounds[currentRound].answer;
+
+    if (option === correct) {
       setScore(score + 10);
       setFeedback("Correct! +10 🍌");
+
       setTimeout(() => nextRound(), 1000);
     } else {
       setFeedback("Try again! ❌");
@@ -37,51 +87,79 @@ const BeginnerLevel = () => {
     }
   };
 
-  //Move to next round or finish the level
+  //move to next round / finish the level
   const nextRound = () => {
     setSelected(null);
     setFeedback("");
-    if (currentRound < rounds.length - 1) setCurrentRound(currentRound + 1);
-    else setLevelComplete(true);
+
+    if (currentRound < rounds.length - 1) {
+      setCurrentRound(currentRound + 1);
+    }else {
+      setLevelComplete(true); 
+    }
   };
 
+  //loading screen
+  if(loading){
+    return(
+      <div className="min-h-screen flex items-center justify-center text-white text-4xl">
+        Loading....
+      </div>
+    );
+  }
+
+  //level complete screen
   if (levelComplete) {
     return (
       <div
         className="min-h-screen bg-cover bg-center flex flex-col items-center justify-center text-white"
         style={{
           backgroundImage: "url('/Assets/images/Loading.jpg')",
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.6)",
           backgroundBlendMode: "overlay",
         }}
       >
         <motion.h1 className="text-5xl font-bold mb-4" initial={{ scale: 0 }} animate={{ scale: 1 }}>
-          🎉 Level Complete!
+          🎉 Beginner Level Complete! 🎉
         </motion.h1>
         <motion.p className="text-2xl mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           Your Score: {score} 🍌
         </motion.p>
+
         <button
-          onClick={() => navigate("/intermediate")}
+          onClick={async () => {
+            await saveScore();
+            navigate("/level-complete", {
+              state: {
+                score,
+                bonusBananas: 0,
+                bonusPoints: 0,
+                intermediateTotal: score,  
+                unlocked: true,            
+                level: "beginner"
+              }
+            });
+          }}
           className="bg-yellow-400 text-green-800 font-bold px-6 py-3 rounded-xl hover:bg-yellow-500 transition"
         >
-          Next Level ➜
+          Continue ➜
         </button>
+
       </div>
     );
   }
 
-  //Game UI
+  //beginner level UI
   return (
     <div
       className="relative min-h-screen bg-cover bg-center flex flex-col items-center justify-between text-white py-10"
       style={{
         backgroundImage: "url('/Assets/images/Loading.jpg')",
-        backgroundColor: "rgba(0,0,0,0.6)",
+        backgroundColor: "rgba(0,0,0,0.5)",
         backgroundBlendMode: "overlay",
       }}
     >
-      {/* Monkey Score Popup */}
+      
       <motion.div
         initial={{ y: -50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -97,12 +175,6 @@ const BeginnerLevel = () => {
         </div>
       </motion.div>
 
-      {/* Top bar */}
-      <div className="w-full flex justify-end items-center px-8 mb-12">
-        <div className="text-2xl font-semibold">👤 Player</div>
-      </div>
-
-      {/* Round & clue */}
       <div className="text-center mb-8 px-4">
         <p className="text-xl font-bold text-yellow-200 tracking-wide animate-pulse">Round {currentRound + 1}/5</p>
         <h2 className="text-2xl font-extrabold mt-2 text-yellow-300 drop-shadow-lg" style={{ fontFamily: "'Comic Neue', cursive" }}>
@@ -110,7 +182,6 @@ const BeginnerLevel = () => {
         </h2>
       </div>
 
-      {/* Answer Cards */}
       <div className="grid grid-cols-4 gap-8 mb-12 mt-10 justify-items-center">
         {rounds[currentRound].options.map((option, index) => (
           <motion.div
@@ -118,7 +189,7 @@ const BeginnerLevel = () => {
             whileHover={{ scale: 1.1, rotate: 2 }}
             whileTap={{ scale: 0.95, rotate: -2 }}
             className={`
-              w-44 h-44 bg-yellow-400 flex items-center justify-center rounded-3xl text-xl font-bold cursor-pointer border-4 border-yellow-500 shadow-2xl transition-all
+              w-44 h-44 bg-yellow-400 flex items-center justify-center rounded-3xl text-xl font-bold cursor-pointer border-4 border-white shadow-2xl transition-all
               ${selected === option && option === rounds[currentRound].answer ? "bg-green-400 border-green-600 shadow-green-400/60" : ""}
               ${selected === option && option !== rounds[currentRound].answer ? "bg-red-400 border-red-600 shadow-red-400/60" : ""}
             `}
@@ -129,7 +200,6 @@ const BeginnerLevel = () => {
         ))}
       </div>
 
-      {/* Feedback */}
       {feedback && (
         <motion.div
           className="text-2xl font-bold mb-8 bg-white/30 backdrop-blur-sm px-8 py-4 rounded-3xl text-center drop-shadow-xl"
@@ -142,15 +212,21 @@ const BeginnerLevel = () => {
         </motion.div>
       )}
 
-      {/* Levels button */}
       <button
-        onClick={() => navigate("/levels")}
+        onClick={() => navigate("/dashboard")}
         className="mb-8 bg-green-600 px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition"
       >
-        ⬅ Back to Levels
+        ⬅ Back to Dashboard
       </button>
     </div>
   );
 };
 
 export default BeginnerLevel;
+
+
+
+
+
+
+
