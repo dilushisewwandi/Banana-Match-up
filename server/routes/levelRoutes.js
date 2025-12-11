@@ -3,15 +3,16 @@ import {getRoundsByLevel, saveIntermediateScore, saveBeginnerScore, saveAdvanced
 import { verifyToken } from "../middleware/authMiddleware.js";
 const router = express.Router();
 
-router.get("/rounds/:levelId", getRoundsByLevel); 
+//get rounds by level
+router.get("/rounds/:levelId", verifyToken, getRoundsByLevel); 
 
+//save 3 level score routes
 router.post("/save/beginner", verifyToken, saveBeginnerScore);
 router.post("/save/intermediate", verifyToken, saveIntermediateScore);
 router.post("/save/advanced", verifyToken, saveAdvancedScore); 
+
 // fix by github copilot: expose a simple config route under /api/levels/config/:levelName
 router.get("/config/:levelName", getLevelConfig);
 
-// legacy/incorrect route kept for compatibility (some clients might call /api/levels/levels/config/:name)
-router.get("/levels/config/:levelName", getLevelConfig);
 
 export default router;
