@@ -1,15 +1,18 @@
-import { where } from 'sequelize';
 import Level from '../models/LevelModel.js';
 import { Player } from '../models/PlayerModel.js';
 import { Score } from '../models/ScoreModel.js';
 
+//get dashboard data
 export const getDashboardData = async (req, res) => {
     try {
-        const playerId = req.query.playerId;
+        const userIdFromToken = req.user.id;
+        const player = await Player.findOne({where: {userId: userIdFromToken}});
 
-        if(!playerId){
-            return res.status(400).json({error: "playerId is required"});
+        if(!player){
+            return res.status(404).json({error: "Player not found"});
         }
+
+        const playerId = player.playerId;
 
         // Fetch total player score per level
         const beginnerScore = await Score.sum('scoreValue', { where: { playerId}, include: [{model: Level, where:{name: "beginner"}}] }) || 0;
@@ -18,26 +21,42 @@ export const getDashboardData = async (req, res) => {
 
         const totalScore = beginnerScore + intermediateScore + advancedScore;
 
-        //fetch player's current level
-        const player = await Player.findByPk(playerId);
-        if(!player) return res.status(404).json({error:"player not found"});
-        // determine next level (by order)
         const currentLevel = await Level.findOne({ where: { name: player.currentLevel } });
         let nextLevel = null;
         if (currentLevel) {
             nextLevel = await Level.findOne({ where: { order: currentLevel.order + 1 } });
         }
 
-            // fix by gihub copilot: added nextLevel and pointsToNext calculation for dashboard progress
+        let pointsToNext = 0;
 
+        // fix by gihub copilot: added nextLevel and pointsToNext calculation for dashboard progress
+        if (nextLevel){
+            if(player.currentLevel === "beginner"){
+                if(nextLevel.name === "intermediate"){
+                    pointsToNext = Math.max(0, nextLevel.scoreThreshold - beginnerScore);
+                }
+
+                if(nextLevel.name === "advanced"){
+                    pointsToNext = Math.max(0, nextLevel.scoreThreshold - intermediateScore);
+                }
+            }
+
+            if(player.currentLevel === "intermediate"){
+                if(nextLevel.name === "advanced"){
+                    pointsToNext = Math.max(0, nextLevel.scoreThreshold -intermediateScore);
+                }
+            }
+        }
+
+    
         res.status(200).json({
             beginner: beginnerScore,
             intermediate: intermediateScore,
             advanced: advancedScore,
             totalScore,
             currentLevel: player.currentLevel,
-            nextLevel: nextLevel ? { levelId: nextLevel.levelId, name: nextLevel.name, scoreThreshold: nextLevel.scoreThreshold } : null,
-            pointsToNext: nextLevel ? Math.max(0, nextLevel.scoreThreshold - totalScore) : 0,
+            nextLevel,
+            pointsToNext,
         });
     } catch (error) {
         console.error('Error fetching dashboard data:', error);

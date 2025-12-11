@@ -1,5 +1,6 @@
 import { Player, Score, Level, Round, sequelize } from "../models/index.js";
 
+//get rounds by level
 export const getRoundsByLevel = async (req, res) => {
   const { levelId } = req.params;
 
@@ -20,6 +21,7 @@ export const getRoundsByLevel = async (req, res) => {
       order: [["roundId","ASC"]]
     });
 
+    //parse options
     const parsedRounds = rounds.map(r => {
       let opts  = r.options;
       if(typeof opts === "string"){
@@ -40,21 +42,24 @@ export const getRoundsByLevel = async (req, res) => {
 };
 
 
-// Save Beginner Level Score
+// save beginner level score
 export const saveBeginnerScore = async (req, res) => {
   try {
-    let { playerId, scoreValue } = req.body;
 
-    // allow deriving playerId from JWT user id when route protected
+    // allow deriving playerId from JWT user id when route protected(fix by github copilot)
     const userIdFromToken = req.user?.id;
+    const playerRecord = await Player.findOne({where: {userId: userIdFromToken}});
+    let playerId = playerRecord.playerId;
+
     if (!playerId && userIdFromToken) {
       const p = await Player.findOne({ where: { userId: userIdFromToken } });
       playerId = p?.playerId;
     }
 
     // input validation
-    playerId = parseInt(playerId, 10);
-    scoreValue = Number(scoreValue);
+    let scoreValue = Number(req.body.scoreValue);
+    playerId = Number(playerId);
+
     if (!playerId || isNaN(scoreValue)) {
       return res.status(400).json({ message: "Invalid playerId or scoreValue" });
     }
@@ -96,12 +101,16 @@ export const saveBeginnerScore = async (req, res) => {
 };
 
 // Save Intermediate Level Score
+//(fix by github copilot)
 export const saveIntermediateScore = async (req, res) => {
   try {
-    let { playerId, roundsScore = 0, bonusScore = 0 } = req.body;
+    let { roundsScore = 0, bonusScore = 0 } = req.body;
 
     // derive playerId from token if not provided
     const userIdFromToken = req.user?.id;
+    const playerRecord = await Player.findOne({where: {userId: userIdFromToken}});
+    let playerId = playerRecord.playerId;
+    
     if (!playerId && userIdFromToken) {
       const p = await Player.findOne({ where: { userId: userIdFromToken } });
       if (!p) return res.status(404).json({ message: "Player not found" });
@@ -200,10 +209,13 @@ export const saveIntermediateScore = async (req, res) => {
 // Save Advanced Level Score
 export const saveAdvancedScore = async (req, res) => {
   try {
-    let { playerId, roundsScore = 0, bonusScore = 0 } = req.body;
+    let {roundsScore = 0, bonusScore = 0 } = req.body;
 
     // derive playerId from token
     const userIdFromToken = req.user?.id;
+    const playerRecord = await Player.findOne({where: {userId: userIdFromToken}});
+    let playerId = playerRecord.playerId;
+    
     if (!playerId && userIdFromToken) {
       const p = await Player.findOne({ where: { userId: userIdFromToken } });
       playerId = p?.playerId;
@@ -274,6 +286,8 @@ export const saveAdvancedScore = async (req, res) => {
   }
 };
 
+
+//get level configuration
 export const getLevelConfig = async (req, res) => {
   const { levelName } = req.params;
 

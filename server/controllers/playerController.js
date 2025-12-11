@@ -1,6 +1,7 @@
 import { Player } from "../models/PlayerModel.js";
 import { User } from "../models/UserModel.js";
 
+//get player results
 export const getPlayerResult = async (req, res) => {
   try {
     const { playerId } = req.params;

@@ -11,7 +11,7 @@ export const getLeaderboard = async (req, res) => {
         ],
         attributes: ["playerId", "totalScore"],
         order: [["totalScore", "DESC"]],
-        limit: 10
+        limit: 10 //only top 10 players fetch
     });
 
     const leaderboard = players.map((p) => ({
