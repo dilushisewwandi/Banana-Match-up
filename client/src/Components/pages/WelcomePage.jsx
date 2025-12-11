@@ -6,12 +6,11 @@ const WelcomePage = () => {
   const [player, setPlayer] = useState({ name: "Player" });
 
   useEffect(() =>{
-    //Get the JWT token stored in localStorage after login
     const token = localStorage.getItem("token");
 
-    //If there is no token, redirect the user to the login page
+    //redirect to the login page when no token
     if(!token) {
-      navigate("/login"); 
+      navigate("/auth"); 
       return;
     }
 
@@ -30,6 +29,7 @@ const WelcomePage = () => {
     .catch(err => console.error(err)); 
   }, [navigate]);
 
+  //welcome page UI
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-lime-100 via-green-100 to-yellow-100 overflow-hidden font-playful">
       {/* Animated Background Bananas */}

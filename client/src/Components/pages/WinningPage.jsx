@@ -15,10 +15,20 @@ const WinningPage = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+      if(!token){
+        navigate("/auth");
+      }
+  }, []);
+
+  //fetch final score from backend
+  useEffect(() => {
     const fetchResult = async () => {
       try {
+        const token = localStorage.getItem("token");
         const res = await axios.get(
-          `http://localhost:5000/api/players/${playerId}/result`
+          `http://localhost:5000/api/players/${playerId}/result`,
+          {headers:{Authorization:`Bearer ${token}`,},}
         );
 
         setPlayerName(res.data.playerName);
@@ -41,10 +51,10 @@ const WinningPage = () => {
     );
   }
 
+  //page UI
   return (
     <div className="relative min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-yellow-100 via-orange-200 to-yellow-300 font-playful overflow-hidden">
 
-      {/* Floating Bananas */}
       {[...Array(14)].map((_, i) => (
         <motion.img
           key={i}
@@ -66,7 +76,6 @@ const WinningPage = () => {
         />
       ))}
 
-      {/* Fireworks */}
       {[...Array(3)].map((_, i) => (
         <motion.div
           key={i}
@@ -87,7 +96,6 @@ const WinningPage = () => {
         />
       ))}
 
-      {/* Jumping Monkey */}
       <motion.img
         src="/Assets/images/cartoon-monkey.png"
         className="absolute top-10 right-10 w-40 drop-shadow-xl"
@@ -101,7 +109,6 @@ const WinningPage = () => {
         }}
       />
 
-      {/* Main Winning Card */}
       <motion.div
         className="z-10 bg-white/70 backdrop-blur-xl px-10 py-8 rounded-3xl shadow-2xl border-4 border-yellow-400 text-center space-y-6"
         initial={{ scale: 0 }}
@@ -132,7 +139,6 @@ const WinningPage = () => {
           🍌 Ultimate Banana Champion 🍌
         </h2>
 
-        {/* Buttons */}
         <div className="flex flex-col md:flex-row justify-center gap-6 mt-6">
 
           <motion.button

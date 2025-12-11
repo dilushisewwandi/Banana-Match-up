@@ -46,6 +46,7 @@ const LevelComplete = () => {
     return () => clearInterval(interval);
   }, [targetScore, targetBonusBananas, targetBonusPoints, targetTotal]);
 
+  //handle navigation(based on completed level)
   const handleNext = () => {
     if (level === "beginner") {
       navigate("/intermediate");
@@ -56,10 +57,10 @@ const LevelComplete = () => {
     }
   };
 
+  //UI
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-yellow-100 via-yellow-200 to-yellow-300 overflow-hidden text-gray-800">
 
-      {/* 🍌 Banana Rain Background */}
       {[...Array(25)].map((_, i) => (
         <motion.div
           key={i}
@@ -76,8 +77,6 @@ const LevelComplete = () => {
           🍌
         </motion.div>
       ))}
-
-      {/* Main Card */}
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -92,7 +91,6 @@ const LevelComplete = () => {
           🎉 LEVEL COMPLETE 🎉
         </motion.h1>
 
-        {/* Level Messages */}
         {level === "beginner" && (
           <p className="text-xl font-bold text-green-600 mb-4">
             ✅ INTERMEDIATE LEVEL UNLOCKED!
@@ -111,7 +109,6 @@ const LevelComplete = () => {
           )
         )}
 
-        {/* Animated Scores */}
         <div className="space-y-3 text-2xl font-bold mt-6">
           <p>🍌 Rounds Score: <span className="text-orange-500">{animatedScore}</span></p>
           <p>🍌 Bonus Bananas: <span className="text-orange-500">{animatedBonus}</span></p>
@@ -121,7 +118,6 @@ const LevelComplete = () => {
           </p>
         </div>
 
-        {/* Buttons */}
         <div className="mt-10 flex justify-center gap-4">
           <motion.button
             whileHover={{ scale: 1.05 }}

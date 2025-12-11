@@ -1,6 +1,5 @@
 // This component was partially generated using an AI tool (ChatGPT).
 // Tailwind CSS classes were adapted from official documentation: https://tailwindcss.com/docs
-
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
