@@ -15,11 +15,19 @@ const Dashboard = () => {
   const [pointsToNext, setPointsToNext] = useState(0);
   const [currentLevel, setCurrentLevel] = useState("beginner");
 
+    useEffect(() => {
+      const token = localStorage.getItem("token");
+      if(!token){
+        navigate("/auth");
+      }
+    }, []);
+    
   useEffect(() => {
     const fetchDashboardData = async () => {
       try{
         //get logged-in playerId assuming localStorage after the user login
         const playerId = localStorage.getItem("playerId");
+        const token = localStorage.getItem("token");
 
         if(!playerId){
           console.error("No player found in localStorage.");
@@ -28,7 +36,9 @@ const Dashboard = () => {
         }
 
         //fetch player data from backend
-        const res = await axios.get(`http://localhost:5000/api/dashboard?playerId=${playerId}`);
+        const res = await axios.get(`http://localhost:5000/api/dashboard`,
+          {headers: {Authorization: `Bearer ${token}`,},}
+        );
         setScores(res.data);
         setCurrentLevel(res.data.currentLevel);
         setNextLevel(res.data.nextLevel || null);
