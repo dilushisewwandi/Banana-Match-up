@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+//create new sequelize connection 
 export const sequelize = new Sequelize(
     process.env.DB_NAME,
     process.env.DB_USER,
@@ -15,6 +16,7 @@ export const sequelize = new Sequelize(
     }
 );
 
+//test db connection
 export const connectDB = async () =>{
     try{
         await sequelize.authenticate();
