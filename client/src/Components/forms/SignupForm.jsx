@@ -1,21 +1,25 @@
-// // This component was partially generated using an AI tool (ChatGPT).
-// // Tailwind CSS classes were adapted from official documentation: https://tailwindcss.com/docs
+//This component was partially generated using an AI tool (ChatGPT).
+//Tailwind CSS classes were adapted from official documentation: https://tailwindcss.com/docs
 import { useState } from "react";
 import { toast } from "react-toastify";
 import { motion } from "framer-motion";
 
 const SignupForm = ({ onSignupSuccess }) => {
+  //form values store
   const [formData, setFormData] = useState({ username: "", email: "", password: "" });
 
+  //input typing handle
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  //form submit handle
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      //send signup details to backend 
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -24,6 +28,7 @@ const SignupForm = ({ onSignupSuccess }) => {
 
       const data = await res.json();
 
+      //signup success
       if (res.ok) {
         toast.success("🍌 Signup Successful! Welcome to the Jungle! 🌴", {
           style: {
@@ -37,7 +42,7 @@ const SignupForm = ({ onSignupSuccess }) => {
         });
 
         setTimeout(() => {
-          onSignupSuccess(); // Switch to Login form smoothly
+          onSignupSuccess(); 
         }, 1500);
       } else {
         toast.error(`⚠️ ${data.message || "Signup failed!"}`, {
@@ -61,6 +66,7 @@ const SignupForm = ({ onSignupSuccess }) => {
     }
   };
 
+  //form UI
   return (
     <motion.form
       initial={{ x: 0, opacity: 1 }}

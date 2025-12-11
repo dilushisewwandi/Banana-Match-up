@@ -12,25 +12,27 @@ const LoginForm = () => {
     password: "",
   });
 
+  //input typing handle
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  //login form submit handle
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     try {
+      //send login data to backend
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-
       const data = await res.json();
 
       if (res.ok) {
-        //Show toast FIRST (on AuthPage)
+        //login success
         toast.success("🍌 Login Successful! Let’s play!", {
           style: {
             background: "#E9FFE7",
@@ -40,7 +42,7 @@ const LoginForm = () => {
           },
         });
 
-        //Save token and clear form
+        //save JWT token
         localStorage.setItem("token", data.token);
 
         //save player data for dashboard
@@ -49,11 +51,10 @@ const LoginForm = () => {
           localStorage.setItem("playerId", data.player.playerId);
         }
 
-        
-
+        //reset the form
         setFormData({ email: "", password: "" });
 
-        //Wait for toast → THEN navigate
+        //welcome page navigate
         setTimeout(() => {
           navigate("/welcome");
         }, 1500);
@@ -81,6 +82,7 @@ const LoginForm = () => {
     }
   };
 
+  //login form UI
   return (
     <form
       onSubmit={handleSubmit}
