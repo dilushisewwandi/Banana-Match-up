@@ -13,6 +13,7 @@ const Leaderboard = () => {
 
   const myUserId = localStorage.getItem("userId");
 
+  //fetch leaderboard
   const fetchLeaderboard = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/leaderboard");
@@ -31,10 +32,13 @@ const Leaderboard = () => {
     return () => clearInterval(interval);
   }, []);
 
+
+  //search players
   const filteredPlayers = players.filter((p) =>
     p.username?.toLowerCase().includes(search.toLowerCase())
   );
 
+  //leaderboard UI
   return (
     <div className="relative min-h-screen overflow-hidden flex flex-col items-center justify-center bg-yellow-50">
 
